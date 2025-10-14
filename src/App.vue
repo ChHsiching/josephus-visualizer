@@ -255,29 +255,12 @@ onMounted(async () => {
 <style>
 @import './styles/gruvbox-dark.scss';
 
-#app {
-  width: 100vw;
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
+/* App-specific overrides */
 .main-container {
   display: flex;
   flex: 1;
-  height: calc(100vh - 80px);
+  height: calc(100vh - 60px); /* Match control panel height */
 }
 
-/* Global resets */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-body {
-  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-  overflow: hidden;
-}
+/* Global resets are already in gruvbox-dark.scss */
 </style>

@@ -112,6 +112,7 @@ onMounted(() => {
   line-height: 1.5;
   overflow-y: auto;
   height: 100%;
+  text-align: left; /* Ensure text is left-aligned */
 }
 
 .code-container :deep(.code-line) {

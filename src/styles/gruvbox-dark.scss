@@ -48,7 +48,7 @@ body {
 .main-container {
   display: flex;
   flex: 1;
-  height: calc(100vh - 60px);
+  /* Height is now controlled by App.vue */
 }
 
 // Code Display Panel
@@ -58,12 +58,16 @@ body {
   border-right: 2px solid $gruvbox-dark-bg2;
   overflow-y: auto;
   padding: 20px;
+  display: flex;
+  flex-direction: column;
 
   .code-content {
     background-color: $gruvbox-dark-bg;
     border-radius: 8px;
     padding: 20px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    flex: 1;
+    text-align: left; /* Ensure code is left-aligned */
   }
 }
 

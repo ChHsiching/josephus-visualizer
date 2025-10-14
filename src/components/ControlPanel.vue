@@ -132,7 +132,7 @@ const handleSpeedChange = () => {
 
 <style scoped>
 .control-panel {
-  height: 80px;
+  height: 60px; /* Match gruvbox.scss height */
   background-color: #3c3836;
   border-top: 2px solid #504945;
   display: flex;
@@ -141,6 +141,8 @@ const handleSpeedChange = () => {
   padding: 0 20px;
   gap: 20px;
   flex-wrap: wrap;
+  position: relative; /* Ensure it stays visible */
+  z-index: 10; /* Higher z-index to stay on top */
 }
 
 .button-group {
