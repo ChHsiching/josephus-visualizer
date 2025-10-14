@@ -1,6 +1,6 @@
 import hljs from 'highlight.js/lib/core';
 import c from 'highlight.js/lib/languages/c';
-import anime from 'animejs';
+import * as anime from 'animejs';
 
 // Register C language for syntax highlighting
 hljs.registerLanguage('c', c);
