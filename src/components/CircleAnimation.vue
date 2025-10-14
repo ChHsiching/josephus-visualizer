@@ -5,7 +5,7 @@
         ref="svgContainer"
         :width="svgSize"
         :height="svgSize"
-        viewBox="0 0 600 600"
+        viewBox="0 0 700 700"
         class="circle-svg"
       >
         <!-- Render circle links -->
@@ -24,10 +24,11 @@
             v-for="node in nodes"
             :key="node.id"
             :node="node"
-            :position="getNodePosition(node.id, existingNodes.length)"
+            :position="getNodePosition(node.id, 20)"
             :active="activeNodeId === node.id"
             :to-remove="nodesToRemove.includes(node.id)"
             :removed="!node.exists"
+            :class="{ 'node-visible': node.exists }"
             @node-click="handleNodeClick"
           />
         </g>
@@ -127,9 +128,9 @@ const links = computed(() => {
 function getNodePosition(nodeId, totalNodes) {
   // Fixed: Always use 20 nodes for circular layout
   const angle = (nodeId - 1) * (2 * Math.PI / 20) - Math.PI / 2
-  const radius = 200
-  const centerX = 300
-  const centerY = 300
+  const radius = 250  // Increased from 200 to 250
+  const centerX = 350
+  const centerY = 350
 
   return {
     x: centerX + radius * Math.cos(angle),
@@ -185,8 +186,13 @@ const applyNodeClass = (element, className) => {
  * Animate ring initialization
  */
 const animateInitialization = () => {
-  // Animation is now handled by Vue's reactive class bindings
-  console.log('Initialization animation started')
+  // Add staggered entrance animation for nodes
+  const nodes = document.querySelectorAll('.circle-node')
+  nodes.forEach((node, index) => {
+    setTimeout(() => {
+      node.style.opacity = '1'
+    }, index * 50)
+  })
 }
 
 /**
@@ -269,59 +275,17 @@ onMounted(() => {
 /* Node animation classes */
 .circle-node {
   opacity: 0;
-  transform: scale(0.5);
-  transition: all 0.5s ease;
+  transition: opacity 0.3s ease;
 }
 
 .circle-node.node-visible {
   opacity: 1;
-  transform: scale(1);
-}
-
-.circle-node.node-active {
-  filter: brightness(1.3);
-  transform: scale(1.1);
-}
-
-.circle-node.node-removing {
-  filter: brightness(1.5);
-  transform: scale(1.2);
-  animation: node-removal 0.5s ease-out;
 }
 
 .circle-node.node-removed {
   opacity: 0.3;
-  transform: scale(0.8);
 }
 
-.circle-node.node-complete {
-  animation: node-complete 1s ease-in-out;
-}
-
-@keyframes node-removal {
-  0% {
-    transform: scale(1);
-    filter: brightness(1);
-  }
-  50% {
-    transform: scale(1.3);
-    filter: brightness(1.5);
-  }
-  100% {
-    transform: scale(0.8);
-    filter: brightness(0.8);
-    opacity: 0.3;
-  }
-}
-
-@keyframes node-complete {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.2);
-  }
-}
 
 /* Responsive design */
 @media (max-width: 768px) {

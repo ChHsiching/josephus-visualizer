@@ -4,18 +4,17 @@
  */
 export class JosephusSimulator {
   constructor() {
-    this.nodes = [];
     this.currentStep = 0;
     this.eliminationOrder = [];
+
+    // Initialize nodes first - this is critical!
+    this.initializeNodes();
 
     // Pre-computed elimination sequence for N=20 with bounds [3,5,7,13]
     this.precomputedSequence = this.computeEliminationSequence();
 
-    // Generate all animation steps
+    // Generate all animation steps (now nodes are initialized)
     this.animationSteps = this.generateAnimationSteps();
-
-    // Initialize nodes
-    this.initializeNodes();
   }
 
   /**

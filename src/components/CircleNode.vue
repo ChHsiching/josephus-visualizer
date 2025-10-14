@@ -7,7 +7,7 @@
     :transform="`translate(${position.x}, ${position.y})`"
   >
     <circle
-      :r="nodeRadius"
+      :r="nodeRadius * (removed ? 0.8 : (active || toRemove ? (toRemove ? 1.2 : 1.1) : 1.0))"
       class="node-circle"
       :class="circleClasses"
     />

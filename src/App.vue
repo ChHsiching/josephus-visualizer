@@ -118,9 +118,8 @@ const handleReset = () => {
 }
 
 const handleStepForward = () => {
-  if (currentStep.value < totalSteps.value - 1) {
-    currentStep.value++
-    simulator.value.executeToStep(currentStep.value)
+  if (simulator.value && simulator.value.nextStep()) {
+    currentStep.value = simulator.value.currentStep
     const state = simulator.value.getAnimationState()
     if (state && state.line) {
       activeLine.value = state.line
@@ -129,9 +128,8 @@ const handleStepForward = () => {
 }
 
 const handleStepBackward = () => {
-  if (currentStep.value > 0) {
-    currentStep.value--
-    simulator.value.executeToStep(currentStep.value)
+  if (simulator.value && simulator.value.previousStep()) {
+    currentStep.value = simulator.value.currentStep
     const state = simulator.value.getAnimationState()
     if (state && state.line) {
       activeLine.value = state.line
@@ -162,7 +160,10 @@ const handleLineClick = (lineNumber) => {
       }
     }
 
-    currentStep.value = Math.min(targetStep, simulator.value.getTotalSteps() - 1)
+    // Sync simulator state
+    targetStep = Math.min(targetStep, simulator.value.getTotalSteps() - 1)
+    simulator.value.executeToStep(targetStep)
+    currentStep.value = simulator.value.currentStep
   }
 }
 
