@@ -1,0 +1,336 @@
+// Gruvbox Dark Theme Colors
+$gruvbox-dark-bg: #282828;
+$gruvbox-dark-bg0: #1d2021;
+$gruvbox-dark-bg1: #3c3836;
+$gruvbox-dark-bg2: #504945;
+$gruvbox-dark-fg: #ebdbb2;
+$gruvbox-dark-fg0: #fbf1c7;
+$gruvbox-dark-fg1: #ebdbb2;
+$gruvbox-dark-red: #cc241d;
+$gruvbox-dark-green: #98971a;
+$gruvbox-dark-yellow: #d79921;
+$gruvbox-dark-blue: #458588;
+$gruvbox-dark-purple: #b16286;
+$gruvbox-dark-aqua: #689d6a;
+$gruvbox-dark-orange: #d65d0e;
+$gruvbox-dark-light-red: #fb4934;
+$gruvbox-dark-light-green: #b8bb26;
+$gruvbox-dark-light-yellow: #fabd2f;
+$gruvbox-dark-light-blue: #83a598;
+$gruvbox-dark-light-purple: #d3869b;
+$gruvbox-dark-light-aqua: #8ec07c;
+$gruvbox-dark-light-orange: #fe8019;
+
+// Global Styles
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background-color: $gruvbox-dark-bg;
+  color: $gruvbox-dark-fg;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  overflow: hidden;
+}
+
+#app {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+// Layout Container
+.main-container {
+  display: flex;
+  flex: 1;
+  height: calc(100vh - 60px);
+}
+
+// Code Display Panel
+.code-panel {
+  flex: 1;
+  background-color: $gruvbox-dark-bg0;
+  border-right: 2px solid $gruvbox-dark-bg2;
+  overflow-y: auto;
+  padding: 20px;
+
+  .code-content {
+    background-color: $gruvbox-dark-bg;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+}
+
+// Animation Panel
+.animation-panel {
+  flex: 1;
+  background-color: $gruvbox-dark-bg0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+
+  .animation-container {
+    width: 90%;
+    height: 90%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+// Control Panel
+.control-panel {
+  height: 60px;
+  background-color: $gruvbox-dark-bg1;
+  border-top: 2px solid $gruvbox-dark-bg2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+
+  button {
+    padding: 10px 20px;
+    background-color: $gruvbox-dark-blue;
+    color: $gruvbox-dark-fg;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 14px;
+    transition: all 0.3s ease;
+
+    &:hover {
+      background-color: $gruvbox-dark-light-blue;
+      transform: translateY(-1px);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+
+  .speed-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    label {
+      color: $gruvbox-dark-fg1;
+      font-size: 14px;
+    }
+
+    input[type="range"] {
+      width: 120px;
+      height: 4px;
+      background: $gruvbox-dark-bg2;
+      outline: none;
+      border-radius: 2px;
+
+      &::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 16px;
+        height: 16px;
+        background: $gruvbox-dark-blue;
+        cursor: pointer;
+        border-radius: 50%;
+
+        &:hover {
+          background: $gruvbox-dark-light-blue;
+        }
+      }
+    }
+  }
+}
+
+// Code Highlighting for Gruvbox Theme
+.hljs {
+  background-color: $gruvbox-dark-bg !important;
+  color: $gruvbox-dark-fg !important;
+
+  // C language syntax highlighting
+  .hljs-keyword {
+    color: $gruvbox-dark-red !important;
+  }
+
+  .hljs-type {
+    color: $gruvbox-dark-yellow !important;
+  }
+
+  .hljs-number {
+    color: $gruvbox-dark-purple !important;
+  }
+
+  .hljs-string {
+    color: $gruvbox-dark-green !important;
+  }
+
+  .hljs-comment {
+    color: $gruvbox-dark-gray !important;
+    font-style: italic;
+  }
+
+  .hljs-function {
+    color: $gruvbox-dark-green !important;
+  }
+
+  .hljs-variable {
+    color: $gruvbox-dark-blue !important;
+  }
+
+  .hljs-operator {
+    color: $gruvbox-dark-orange !important;
+  }
+}
+
+// Code line styling
+.code-line {
+  display: block;
+  padding: 2px 0;
+  transition: all 0.3s ease;
+  border-left: 3px solid transparent;
+  padding-left: 10px;
+  margin-left: -10px;
+
+  &:hover {
+    background-color: rgba($gruvbox-dark-bg2, 0.3);
+    cursor: pointer;
+  }
+
+  &.active {
+    background-color: rgba($gruvbox-dark-blue, 0.2);
+    border-left-color: $gruvbox-dark-blue;
+    color: $gruvbox-dark-fg0;
+    font-weight: bold;
+  }
+
+  .line-number {
+    display: inline-block;
+    width: 30px;
+    color: $gruvbox-dark-dark-gray;
+    text-align: right;
+    margin-right: 15px;
+    user-select: none;
+
+    .active & {
+      color: $gruvbox-dark-fg1;
+    }
+  }
+}
+
+// Animation specific styles
+.circle-node {
+  fill: $gruvbox-dark-bg1;
+  stroke: $gruvbox-dark-fg;
+  stroke-width: 2;
+  transition: all 0.3s ease;
+
+  &.active {
+    fill: $gruvbox-dark-blue;
+    stroke: $gruvbox-dark-light-blue;
+    stroke-width: 3;
+  }
+
+  &.to-remove {
+    fill: $gruvbox-dark-red;
+    stroke: $gruvbox-dark-light-red;
+    animation: pulse 1s infinite;
+  }
+
+  &.removed {
+    fill: $gruvbox-dark-bg0;
+    stroke: $gruvbox-dark-dark-gray;
+    opacity: 0.3;
+  }
+}
+
+.node-text {
+  fill: $gruvbox-dark-fg;
+  font-size: 14px;
+  font-weight: bold;
+  text-anchor: middle;
+  dominant-baseline: middle;
+  pointer-events: none;
+
+  .active &,
+  .to-remove & {
+    fill: $gruvbox-dark-fg0;
+  }
+}
+
+.circle-link {
+  fill: none;
+  stroke: $gruvbox-dark-bg2;
+  stroke-width: 2;
+  stroke-dasharray: 5, 5;
+
+  &.active {
+    stroke: $gruvbox-dark-blue;
+    stroke-dasharray: none;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.5s ease-out;
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .main-container {
+    flex-direction: column;
+    height: calc(100vh - 80px);
+  }
+
+  .code-panel,
+  .animation-panel {
+    flex: 1;
+    border-right: none;
+  }
+
+  .code-panel {
+    border-bottom: 2px solid $gruvbox-dark-bg2;
+  }
+
+  .control-panel {
+    height: 80px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .speed-control {
+    flex-basis: 100%;
+    justify-content: center;
+  }
+}
