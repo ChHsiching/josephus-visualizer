@@ -24,6 +24,7 @@
             v-for="node in nodes"
             :key="node.id"
             :node="node"
+            :position="getNodePosition(node.id, existingNodes.length)"
             :active="activeNodeId === node.id"
             :to-remove="nodesToRemove.includes(node.id)"
             :removed="!node.exists"
@@ -77,6 +78,7 @@ const svgSize = 600
 
 // Computed properties
 const nodes = computed(() => props.animationState.nodes || [])
+const existingNodes = computed(() => nodes.value.filter(n => n.exists))
 const activeNodeId = computed(() => props.animationState.activeNode?.id)
 const nodesToRemove = computed(() => props.animationState.nodesToRemove?.map(n => n.id) || [])
 const activeLinks = computed(() => {
