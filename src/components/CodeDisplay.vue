@@ -1,20 +1,22 @@
 <template>
-  <div class="code-panel">
-    <div class="code-content">
+  <div class="code-panel" @click="handleCodeClick">
+    <div class="code-lines">
       <div
-        ref="codeContainer"
-        class="code-container"
-        @click="handleCodeClick"
+        v-for="line in codeLines"
+        :key="line.number"
+        :class="['code-line', { active: line.number === activeLine }]"
+        :data-line="line.number"
       >
-        <!-- Code content will be rendered here -->
+        <span class="line-number">{{ line.number }}</span>
+        <span class="code-text" v-html="highlightedCode(line.content)"></span>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
-import { addLineNumbers, scrollToLine } from '../utils/highlight.js'
+import { computed, watch, nextTick, ref, onMounted } from 'vue'
+import { createHighlighter } from 'shiki'
 
 const props = defineProps({
   code: {
@@ -29,7 +31,105 @@ const props = defineProps({
 
 const emit = defineEmits(['line-click'])
 
-const codeContainer = ref(null)
+// Shiki highlighter instance
+const highlighter = ref(null)
+
+/**
+ * Initialize Shiki highlighter
+ */
+const initHighlighter = async () => {
+  highlighter.value = await createHighlighter({
+    themes: ['one-dark-pro', 'vitesse-dark', 'github-dark'],
+    langs: ['c']
+  })
+}
+
+/**
+ * Manual highlighting function using Shiki
+ */
+const highlightedCode = (code) => {
+  if (!highlighter.value) return code
+
+  try {
+    return highlighter.value.codeToHtml(code, {
+      lang: 'c',
+      theme: 'one-dark-pro'
+    })
+  } catch (error) {
+    console.warn('Shiki highlighting failed:', error)
+    return code
+  }
+}
+
+/**
+ * Parse the hardcoded C code into lines (pure text)
+ */
+const codeLines = computed(() => {
+  const lines = [
+    { number: 1, content: '#include<stdlib.h>' },
+    { number: 2, content: '#include<stdio.h>' },
+    { number: 3, content: '#define N 20' },
+    { number: 4, content: 'typedef struct node {' },
+    { number: 5, content: '    int id;' },
+    { number: 6, content: '    struct node* next;' },
+    { number: 7, content: '    struct node* pre;' },
+    { number: 8, content: '}Node, *pNode;' },
+    { number: 9, content: '' },
+    { number: 10, content: 'pNode RingConstruct(int n) {' },
+    { number: 11, content: '    int i;' },
+    { number: 12, content: '    pNode head, p, q;' },
+    { number: 13, content: '    head = (pNode)malloc(sizeof(Node));' },
+    { number: 14, content: '    head->id = 1;' },
+    { number: 15, content: '    p = head;' },
+    { number: 16, content: '    for (i = 2; i <= n; i++) {' },
+    { number: 17, content: '        q = (pNode)malloc(sizeof(Node));' },
+    { number: 18, content: '        q->id = i;' },
+    { number: 19, content: '        p->next = q;' },
+    { number: 20, content: '        q->pre = p;' },
+    { number: 21, content: '        p = p->next;' },
+    { number: 22, content: '    }' },
+    { number: 23, content: '    p->next = head;' },
+    { number: 24, content: '    head->pre = p;' },
+    { number: 25, content: '    return head;' },
+    { number: 26, content: '}' },
+    { number: 27, content: '' },
+    { number: 28, content: 'int boundMachine(int order) {' },
+    { number: 29, content: '    int boundList[4] = { 3, 5, 7, 13 };' },
+    { number: 30, content: '    return boundList[(order - 1) % 4];' },
+    { number: 31, content: '}' },
+    { number: 32, content: '' },
+    { number: 33, content: 'pNode count(pNode first, int bound) {' },
+    { number: 34, content: '    pNode q;' },
+    { number: 35, content: '    q = first;' },
+    { number: 36, content: '    for (int i = 2; i <= bound; i++) {' },
+    { number: 37, content: '        q = q->next;' },
+    { number: 38, content: '    }' },
+    { number: 39, content: '    return q;' },
+    { number: 40, content: '}' },
+    { number: 41, content: '' },
+    { number: 42, content: 'pNode removeNode(pNode currentNode) {' },
+    { number: 43, content: '    pNode first = currentNode->next;' },
+    { number: 44, content: '    currentNode->pre->next = currentNode->next;' },
+    { number: 45, content: '    first->pre = currentNode->pre;' },
+    { number: 46, content: '    printf("%d ", currentNode->id);' },
+    { number: 47, content: '    free(currentNode);' },
+    { number: 48, content: '    return first;' },
+    { number: 49, content: '}' },
+    { number: 50, content: '' },
+    { number: 51, content: 'int main() {' },
+    { number: 52, content: '    pNode first;' },
+    { number: 53, content: '    pNode toRemove;' },
+    { number: 54, content: '    int i;' },
+    { number: 55, content: '    first = RingConstruct(N);' },
+    { number: 56, content: '    for (int i = 1; i <= N; i++) {' },
+    { number: 57, content: '        toRemove = count(first, boundMachine(i));' },
+    { number: 58, content: '        first = removeNode(toRemove);' },
+    { number: 59, content: '    }' },
+    { number: 60, content: '    return 0;' },
+    { number: 61, content: '}' }
+  ]
+  return lines
+})
 
 /**
  * Handle code line clicks
@@ -45,172 +145,138 @@ const handleCodeClick = (event) => {
 }
 
 /**
- * Render code with syntax highlighting and line numbers
+ * Scroll to active line when it changes
  */
-const renderCode = () => {
-  if (codeContainer.value && props.code) {
-    addLineNumbers(props.code, codeContainer.value, props.activeLine)
+const scrollToActiveLine = async () => {
+  await nextTick()
+  if (!props.activeLine) return
+
+  const activeElement = document.querySelector(`[data-line="${props.activeLine}"]`)
+  if (activeElement) {
+    activeElement.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center'
+    })
   }
 }
 
-/**
- * Update active line highlighting
- */
-const updateActiveLine = () => {
-  if (!codeContainer.value) return
-
-  // Remove all active classes
-  const allLines = codeContainer.value.querySelectorAll('.code-line')
-  allLines.forEach(line => line.classList.remove('active'))
-
-  // Add active class to current line
-  if (props.activeLine) {
-    const activeLineElement = codeContainer.value.querySelector(`[data-line="${props.activeLine}"]`)
-    if (activeLineElement) {
-      activeLineElement.classList.add('active')
-      scrollToLine(codeContainer.value, props.activeLine)
-    }
-  }
-}
-
-// Watch for code changes
-watch(() => props.code, () => {
-  renderCode()
-}, { immediate: true })
-
-// Watch for active line changes
+// Watch for active line changes to scroll
 watch(() => props.activeLine, () => {
-  updateActiveLine()
+  scrollToActiveLine()
 }, { immediate: true })
 
-// Initial render
+// Initialize Shiki on mount
 onMounted(() => {
-  renderCode()
+  initHighlighter()
 })
 </script>
 
 <style scoped>
+/* Main editor panel */
 .code-panel {
   flex: 1;
-  background-color: #1d2021;
+  background-color: #282828; /* Editor background */
   border-right: 2px solid #504945;
   overflow-y: auto;
-  padding: 20px;
-}
-
-.code-content {
-  background-color: #282828;
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  height: 100%;
-}
-
-.code-container {
   font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
   font-size: 14px;
-  line-height: 1.5;
-  overflow-y: auto;
-  height: 100%;
-  text-align: left; /* Ensure text is left-aligned */
+  line-height: 1.6;
+  color: #ebdbb2; /* Default text color */
 }
 
-.code-container :deep(.code-line) {
+/* Code lines container */
+.code-lines {
+  padding: 20px;
+  background-color: #282828;
+  text-align: left; /* Ensure left alignment */
+}
+
+/* Individual code lines - block layout like real editor */
+.code-line {
   display: block;
-  padding: 2px 0;
-  transition: all 0.3s ease;
+  position: relative;
+  min-height: 1.6em;
+  white-space: pre;
+  padding-left: 50px; /* Space for line numbers */
   border-left: 3px solid transparent;
-  padding-left: 10px;
-  margin-left: -10px;
+  transition: background-color 0.15s ease;
 }
 
-.code-container :deep(.code-line:hover) {
-  background-color: rgba(80, 73, 69, 0.3);
+.code-line:hover {
+  background-color: rgba(80, 73, 69, 0.2);
   cursor: pointer;
 }
 
-.code-container :deep(.code-line.active) {
-  background-color: rgba(69, 133, 136, 0.2);
+.code-line.active {
+  background-color: rgba(69, 133, 136, 0.15);
   border-left-color: #458588;
-  color: #fbf1c7;
-  font-weight: bold;
 }
 
-.code-container :deep(.line-number) {
-  display: inline-block;
-  width: 30px;
+/* Line numbers - positioned like real editor */
+.line-number {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 40px;
+  height: 100%;
   color: #665c54;
   text-align: right;
-  margin-right: 15px;
+  padding-right: 10px;
   user-select: none;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: 1.6;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
 }
 
-.code-container :deep(.code-line.active .line-number) {
+.code-line.active .line-number {
+  color: #a89984;
+}
+
+/* Code text - main content area */
+.code-text {
   color: #ebdbb2;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: 1.6;
+  white-space: pre;
 }
 
-/* Gruvbox syntax highlighting */
-.code-container :deep(.hljs) {
-  background-color: #282828 !important;
-  color: #ebdbb2 !important;
+/* Shiki code highlighting styles */
+.code-text :deep(.shiki) {
+  background-color: transparent !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
 }
 
-.code-container :deep(.hljs-keyword) {
-  color: #cc241d !important;
-}
-
-.code-container :deep(.hljs-type) {
-  color: #d79921 !important;
-}
-
-.code-container :deep(.hljs-number) {
-  color: #b16286 !important;
-}
-
-.code-container :deep(.hljs-string) {
-  color: #98971a !important;
-}
-
-.code-container :deep(.hljs-comment) {
-  color: #928374 !important;
-  font-style: italic;
-}
-
-.code-container :deep(.hljs-function) {
-  color: #98971a !important;
-}
-
-.code-container :deep(.hljs-variable) {
-  color: #458588 !important;
-}
-
-.code-container :deep(.hljs-operator) {
-  color: #d65d0e !important;
-}
-
-.code-container :deep(.hljs-built_in) {
-  color: #d79921 !important;
-}
-
-.code-container :deep(.hljs-title) {
-  color: #458588 !important;
+.code-text :deep(code) {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  background: none !important;
+  padding: 0 !important;
 }
 
 /* Scrollbar styling */
-.code-container::-webkit-scrollbar {
-  width: 8px;
+.code-panel::-webkit-scrollbar {
+  width: 10px;
 }
 
-.code-container::-webkit-scrollbar-track {
+.code-panel::-webkit-scrollbar-track {
   background: #1d2021;
 }
 
-.code-container::-webkit-scrollbar-thumb {
+.code-panel::-webkit-scrollbar-thumb {
   background: #504945;
-  border-radius: 4px;
+  border-radius: 5px;
 }
 
-.code-container::-webkit-scrollbar-thumb:hover {
+.code-panel::-webkit-scrollbar-thumb:hover {
   background: #665c54;
 }
 </style>

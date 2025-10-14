@@ -77,77 +77,9 @@ const eliminatedNodes = computed(() => {
   return state.nodes.filter(n => !n.exists).map(n => n.id)
 })
 
-// Load C code
-const loadCCode = async () => {
-  try {
-    const response = await fetch('/joseph-ring-algorithm.c')
-    const code = await response.text()
-    cCode.value = code
-  } catch (error) {
-    console.error('Failed to load C code:', error)
-    // Fallback C code if fetch fails
-    cCode.value = `#include<stdlib.h>
-#include<stdio.h>
-#define N 20
-typedef struct node {
-    int id;
-    struct node* next;
-    struct node* pre;
-}Node, *pNode;
-
-pNode RingConstruct(int n) {
-    int i;
-    pNode head, p, q;
-    head = (pNode)malloc(sizeof(Node));
-    head->id = 1;
-    p = head;
-    for (i = 2; i <= n; i++) {
-        q = (pNode)malloc(sizeof(Node));
-        q->id = i;
-        p->next = q;
-        q->pre = p;
-        p = p->next;
-    }
-    p->next = head;
-    head->pre = p;
-    return head;
-}
-
-int boundMachine(int order) {
-    int boundList[4] = { 3, 5, 7, 13 };
-    return boundList[(order - 1) % 4];
-}
-
-pNode count(pNode first, int bound) {
-    pNode q;
-    q = first;
-    for (int i = 2; i <= bound; i++) {
-        q = q->next;
-    }
-    return q;
-}
-
-pNode removeNode(pNode currentNode) {
-    pNode first = currentNode->next;
-    currentNode->pre->next = currentNode->next;
-    first->pre = currentNode->pre;
-    printf("%d ", currentNode->id);
-    free(currentNode);
-    return first;
-}
-
-int main() {
-    pNode first;
-    pNode toRemove;
-    int i;
-    first = RingConstruct(N);
-    for (int i = 1; i <= N; i++) {
-        toRemove = count(first, boundMachine(i));
-        first = removeNode(toRemove);
-    }
-    return 0;
-}`
-  }
+// Initialize with dummy content (real code is now in CodeDisplay component)
+const initializeCCode = () => {
+  cCode.value = "dummy"
 }
 
 // Initialize simulator
@@ -188,6 +120,7 @@ const handleReset = () => {
 const handleStepForward = () => {
   if (currentStep.value < totalSteps.value - 1) {
     currentStep.value++
+    simulator.value.executeToStep(currentStep.value)
     const state = simulator.value.getAnimationState()
     if (state && state.line) {
       activeLine.value = state.line
@@ -198,6 +131,7 @@ const handleStepForward = () => {
 const handleStepBackward = () => {
   if (currentStep.value > 0) {
     currentStep.value--
+    simulator.value.executeToStep(currentStep.value)
     const state = simulator.value.getAnimationState()
     if (state && state.line) {
       activeLine.value = state.line
@@ -258,8 +192,8 @@ onUnmounted(() => {
 })
 
 // Initialize on mount
-onMounted(async () => {
-  await loadCCode()
+onMounted(() => {
+  initializeCCode()
   initializeSimulator()
 })
 </script>

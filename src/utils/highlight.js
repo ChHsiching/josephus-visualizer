@@ -34,7 +34,7 @@ export function addLineNumbers(code, container, activeLine = null) {
 
     html += `<span class="${lineClass}" data-line="${lineNumber}">`;
     html += `<span class="line-number">${lineNumber}</span>`;
-    html += highlightedLines[index] || '';
+    html += `<span style="white-space: pre;">${highlightedLines[index] || ''}</span>`;
     html += '</span>';
   });
 

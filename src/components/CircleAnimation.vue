@@ -60,7 +60,6 @@
 
 <script setup>
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
-import { animateNodeHighlight, animateNodeRemoval, animateCounting, animatePulse } from '../utils/highlight.js'
 import CircleNode from './CircleNode.vue'
 import CircleLink from './CircleLink.vue'
 
@@ -154,7 +153,7 @@ const triggerAnimations = async () => {
 
   if (!svgContainer.value) return
 
-  const phase = props.animationState.phase
+  const phase = props.animationState.type
 
   switch (phase) {
     case 'initialization':
@@ -173,99 +172,48 @@ const triggerAnimations = async () => {
 }
 
 /**
+ * Simple CSS-based animation helpers
+ */
+const applyNodeClass = (element, className) => {
+  // Remove existing node classes
+  element.className = element.className.replace(/\bnode-\w+/g, '')
+  // Add new class
+  element.classList.add(className)
+}
+
+/**
  * Animate ring initialization
  */
-const animateInitialization = async () => {
-  if (!svgContainer.value) return
-
-  try {
-    const nodeElements = Array.from(svgContainer.value.querySelectorAll('.circle-node'))
-
-    if (nodeElements.length === 0) {
-      console.warn('No circle nodes found for initialization')
-      return
-    }
-
-    // Set initial state
-    nodeElements.forEach(node => {
-      node.style.opacity = '0'
-      node.style.transform = 'scale(0.5)'
-    })
-
-    // Animate to visible state
-    setTimeout(() => {
-      nodeElements.forEach((node, index) => {
-        setTimeout(() => {
-          node.style.transition = 'all 0.5s ease'
-          node.style.opacity = '1'
-          node.style.transform = 'scale(1)'
-        }, index * 100)
-      })
-
-      // Start pulse animation after nodes are visible
-      setTimeout(() => {
-        animatePulse(nodeElements, false)
-      }, nodeElements.length * 100 + 200)
-    }, 100)
-  } catch (error) {
-    console.error('Error during animation initialization:', error)
-  }
+const animateInitialization = () => {
+  // Animation is now handled by Vue's reactive class bindings
+  console.log('Initialization animation started')
 }
 
 /**
  * Animate counting phase
  */
-const animateCountingPhase = async () => {
-  if (!svgContainer.value || !props.animationState.activeNode) return
-
-  try {
-    const activeElement = svgContainer.value.querySelector(`.circle-node[data-node-id="${props.animationState.activeNode.id}"]`)
-    if (activeElement) {
-      animatePulse(activeElement, true)
-    } else {
-      console.warn('Active node element not found:', props.animationState.activeNode.id)
-    }
-  } catch (error) {
-    console.error('Error during counting phase animation:', error)
-  }
+const animateCountingPhase = () => {
+  // Animation is now handled by Vue's reactive class bindings
+  console.log('Counting phase animation for node:', props.animationState.activeNode?.id)
 }
 
 /**
  * Animate removal phase
  */
-const animateRemovalPhase = async () => {
-  const nodeToRemove = props.animationState.nodesToRemove?.[0]
-  if (!nodeToRemove || !svgContainer.value) return
-
-  try {
-    const element = svgContainer.value.querySelector(`.circle-node[data-node-id="${nodeToRemove.id}"]`)
-    if (element) {
-      animateNodeRemoval(element, () => {
-        emit('animation-complete')
-      })
-    } else {
-      console.warn('Node to remove not found:', nodeToRemove.id)
-      // Still emit complete to prevent blocking
-      emit('animation-complete')
-    }
-  } catch (error) {
-    console.error('Error during removal phase animation:', error)
-    // Still emit complete to prevent blocking
+const animateRemovalPhase = () => {
+  // Animation is now handled by Vue's reactive class bindings
+  // Emit completion after a short delay for visual feedback
+  setTimeout(() => {
     emit('animation-complete')
-  }
+  }, 500)
 }
 
 /**
  * Animate completion
  */
-const animateCompletion = async () => {
-  const remainingNodes = svgContainer.value.querySelectorAll('.circle-node:not(.removed)')
-
-  remainingNodes.forEach((node, index) => {
-    setTimeout(() => {
-      animatePulse(node, false)
-    }, index * 200)
-  })
+const animateCompletion = () => {
+  // Animation is now handled by Vue's reactive class bindings
+  console.log('Completion animation started')
 }
 
 // Watch for animation state changes
@@ -316,6 +264,63 @@ onMounted(() => {
   font-size: 14px;
   text-anchor: middle;
   dominant-baseline: middle;
+}
+
+/* Node animation classes */
+.circle-node {
+  opacity: 0;
+  transform: scale(0.5);
+  transition: all 0.5s ease;
+}
+
+.circle-node.node-visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.circle-node.node-active {
+  filter: brightness(1.3);
+  transform: scale(1.1);
+}
+
+.circle-node.node-removing {
+  filter: brightness(1.5);
+  transform: scale(1.2);
+  animation: node-removal 0.5s ease-out;
+}
+
+.circle-node.node-removed {
+  opacity: 0.3;
+  transform: scale(0.8);
+}
+
+.circle-node.node-complete {
+  animation: node-complete 1s ease-in-out;
+}
+
+@keyframes node-removal {
+  0% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  50% {
+    transform: scale(1.3);
+    filter: brightness(1.5);
+  }
+  100% {
+    transform: scale(0.8);
+    filter: brightness(0.8);
+    opacity: 0.3;
+  }
+}
+
+@keyframes node-complete {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2);
+  }
 }
 
 /* Responsive design */
