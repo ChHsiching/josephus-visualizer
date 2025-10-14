@@ -10,8 +10,10 @@
   },
   "dependencies": {
     "@highlightjs/vue-plugin": "^2.1.0",
+    "@monaco-editor/loader": "^1.6.1",
     "animejs": "^4.2.2",
     "highlight.js": "^11.11.1",
+    "monaco-editor": "^0.54.0",
     "sass": "^1.93.2",
     "shiki": "^3.13.0",
     "vue": "^3.5.22"
