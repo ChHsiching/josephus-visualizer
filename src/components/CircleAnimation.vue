@@ -113,8 +113,8 @@ const links = computed(() => {
       nodeLinks.push({
         from: node.id,
         to: nextNode.id,
-        fromPos: getNodePosition(node.id, existingNodes.length),
-        toPos: getNodePosition(nextNode.id, existingNodes.length)
+        fromPos: getNodePosition(node.id, 20),
+        toPos: getNodePosition(nextNode.id, 20)
       })
     }
   })
@@ -126,7 +126,8 @@ const links = computed(() => {
  * Get position for node in circular layout
  */
 function getNodePosition(nodeId, totalNodes) {
-  const angle = (nodeId - 1) * (2 * Math.PI / totalNodes) - Math.PI / 2
+  // Fixed: Always use 20 nodes for circular layout
+  const angle = (nodeId - 1) * (2 * Math.PI / 20) - Math.PI / 2
   const radius = 200
   const centerX = 300
   const centerY = 300
@@ -175,33 +176,57 @@ const triggerAnimations = async () => {
  * Animate ring initialization
  */
 const animateInitialization = async () => {
-  const nodeElements = svgContainer.value.querySelectorAll('.circle-node')
+  if (!svgContainer.value) return
 
-  for (let i = 0; i < nodeElements.length; i++) {
-    const node = nodeElements[i]
-    node.style.opacity = '0'
-    node.style.transform = 'scale(0.5)'
-  }
+  try {
+    const nodeElements = Array.from(svgContainer.value.querySelectorAll('.circle-node'))
 
-  setTimeout(() => {
-    animatePulse(nodeElements, false)
-    nodeElements.forEach((node, index) => {
-      node.style.transition = `all 0.5s ease ${index * 0.1}s`
-      node.style.opacity = '1'
-      node.style.transform = 'scale(1)'
+    if (nodeElements.length === 0) {
+      console.warn('No circle nodes found for initialization')
+      return
+    }
+
+    // Set initial state
+    nodeElements.forEach(node => {
+      node.style.opacity = '0'
+      node.style.transform = 'scale(0.5)'
     })
-  }, 100)
+
+    // Animate to visible state
+    setTimeout(() => {
+      nodeElements.forEach((node, index) => {
+        setTimeout(() => {
+          node.style.transition = 'all 0.5s ease'
+          node.style.opacity = '1'
+          node.style.transform = 'scale(1)'
+        }, index * 100)
+      })
+
+      // Start pulse animation after nodes are visible
+      setTimeout(() => {
+        animatePulse(nodeElements, false)
+      }, nodeElements.length * 100 + 200)
+    }, 100)
+  } catch (error) {
+    console.error('Error during animation initialization:', error)
+  }
 }
 
 /**
  * Animate counting phase
  */
 const animateCountingPhase = async () => {
-  if (!props.animationState.activeNode) return
+  if (!svgContainer.value || !props.animationState.activeNode) return
 
-  const activeElement = svgContainer.value.querySelector(`.circle-node[data-node-id="${props.animationState.activeNode.id}"]`)
-  if (activeElement) {
-    animatePulse(activeElement, true)
+  try {
+    const activeElement = svgContainer.value.querySelector(`.circle-node[data-node-id="${props.animationState.activeNode.id}"]`)
+    if (activeElement) {
+      animatePulse(activeElement, true)
+    } else {
+      console.warn('Active node element not found:', props.animationState.activeNode.id)
+    }
+  } catch (error) {
+    console.error('Error during counting phase animation:', error)
   }
 }
 
@@ -210,13 +235,23 @@ const animateCountingPhase = async () => {
  */
 const animateRemovalPhase = async () => {
   const nodeToRemove = props.animationState.nodesToRemove?.[0]
-  if (!nodeToRemove) return
+  if (!nodeToRemove || !svgContainer.value) return
 
-  const element = svgContainer.value.querySelector(`.circle-node[data-node-id="${nodeToRemove.id}"]`)
-  if (element) {
-    animateNodeRemoval(element, () => {
+  try {
+    const element = svgContainer.value.querySelector(`.circle-node[data-node-id="${nodeToRemove.id}"]`)
+    if (element) {
+      animateNodeRemoval(element, () => {
+        emit('animation-complete')
+      })
+    } else {
+      console.warn('Node to remove not found:', nodeToRemove.id)
+      // Still emit complete to prevent blocking
       emit('animation-complete')
-    })
+    }
+  } catch (error) {
+    console.error('Error during removal phase animation:', error)
+    // Still emit complete to prevent blocking
+    emit('animation-complete')
   }
 }
 

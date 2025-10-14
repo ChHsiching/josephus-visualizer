@@ -1,344 +1,202 @@
 /**
- * Node structure for circular doubly-linked list
- */
-class Node {
-  constructor(id) {
-    this.id = id;
-    this.next = null;
-    this.prev = null;
-    this.exists = true; // For animation purposes
-  }
-}
-
-/**
- * Josephus Ring Simulator
- * Implements the Josephus problem algorithm with step-by-step execution
+ * Simple Josephus Ring Demo Simulator
+ * Pre-computed animation steps for visualization demo
  */
 export class JosephusSimulator {
-  constructor(n = 20) {
-    this.n = n;
-    this.head = null;
-    this.current = null;
-    this.stepHistory = [];
+  constructor() {
+    this.nodes = [];
     this.currentStep = 0;
     this.eliminationOrder = [];
 
-    // Animation state
-    this.animationState = {
-      phase: 'initialization', // initialization, counting, removing, complete
-      currentLine: 1,
-      activeNode: null,
-      nodesToRemove: [],
-      message: ''
-    };
+    // Pre-computed elimination sequence for N=20 with bounds [3,5,7,13]
+    this.precomputedSequence = this.computeEliminationSequence();
 
-    this.initializeRing();
+    // Generate all animation steps
+    this.animationSteps = this.generateAnimationSteps();
+
+    // Initialize nodes
+    this.initializeNodes();
   }
 
   /**
-   * Create circular doubly-linked list with n nodes
+   * Pre-compute the complete elimination sequence
    */
-  initializeRing() {
-    // Line 10-26 in original C code: RingConstruct function
-    this.head = new Node(1);
-    let p = this.head;
+  computeEliminationSequence() {
+    const bounds = [3, 5, 7, 13];
+    const nodes = Array.from({length: 20}, (_, i) => ({ id: i + 1, exists: true }));
+    const eliminationOrder = [];
 
-    for (let i = 2; i <= this.n; i++) {
-      const q = new Node(i);
-      p.next = q;
-      q.prev = p;
-      p = p.next;
+    // Set up circular links
+    for (let i = 0; i < 20; i++) {
+      nodes[i].next = nodes[(i + 1) % 20];
+      nodes[i].prev = nodes[(i - 1 + 20) % 20];
     }
 
-    // Create circular structure
-    p.next = this.head;
-    this.head.prev = p;
-    this.current = this.head;
+    let current = nodes[0];
 
-    this.recordStep('RingConstruct', 10, 'Ring construction completed');
-  }
+    // Simulate the complete algorithm
+    for (let round = 1; round <= 20; round++) {
+      const bound = bounds[(round - 1) % 4];
 
-  /**
-   * Get counting bound for each round (line 28-32)
-   */
-  boundMachine(order) {
-    const boundList = [3, 5, 7, 13];
-    return boundList[(order - 1) % 4];
-  }
-
-  /**
-   * Count from starting node by bound steps (line 34-41)
-   */
-  count(startNode, bound) {
-    let q = startNode;
-    for (let i = 2; i <= bound; i++) {
-      q = q.next;
-    }
-    return q;
-  }
-
-  /**
-   * Remove node from circle and return next starting node (line 44-51)
-   */
-  removeNode(nodeToRemove) {
-    if (!nodeToRemove || !nodeToRemove.exists) return null;
-
-    const nextStart = nodeToRemove.next;
-
-    // Update links
-    nodeToRemove.prev.next = nodeToRemove.next;
-    nextStart.prev = nodeToRemove.prev;
-
-    // Mark as removed for animation
-    nodeToRemove.exists = false;
-    this.eliminationOrder.push(nodeToRemove.id);
-
-    return nextStart;
-  }
-
-  /**
-   * Execute one complete round of elimination
-   */
-  executeRound(roundNumber) {
-    if (this.eliminationOrder.length >= this.n) {
-      return false; // All nodes eliminated
-    }
-
-    // Line 58-60 in original C code: main loop
-    const bound = this.boundMachine(roundNumber);
-    this.recordStep('boundMachine', 28, `Round ${roundNumber}: Counting bound is ${bound}`);
-
-    // Line 59: Count to find node to remove
-    const nodeToRemove = this.count(this.current, bound);
-    this.recordStep('count', 34, `Counting ${bound} steps from node ${this.current.id}`);
-
-    // Line 60: Remove the node
-    this.current = this.removeNode(nodeToRemove);
-    this.recordStep('removeNode', 44, `Removing node ${nodeToRemove.id}`);
-
-    return true;
-  }
-
-  /**
-   * Record a step for animation and debugging
-   */
-  recordStep(functionName, lineNumber, message) {
-    this.stepHistory.push({
-      step: this.stepHistory.length + 1,
-      function: functionName,
-      line: lineNumber,
-      message: message,
-      currentNodes: this.getCurrentNodes(),
-      eliminatedNodes: [...this.eliminationOrder],
-      currentStart: this.current ? this.current.id : null
-    });
-  }
-
-  /**
-   * Get current state of all nodes
-   */
-  getCurrentNodes() {
-    const nodes = [];
-    let current = this.head;
-
-    do {
-      nodes.push({
-        id: current.id,
-        exists: current.exists,
-        isCurrent: current === this.current
-      });
-      current = current.next;
-    } while (current !== this.head);
-
-    return nodes;
-  }
-
-  /**
-   * Get step information for specific line
-   */
-  getStepForLine(lineNumber) {
-    return this.stepHistory.find(step => step.line === lineNumber);
-  }
-
-  /**
-   * Execute algorithm up to specific line
-   */
-  executeToLine(targetLine) {
-    this.reset();
-
-    if (targetLine <= 26) {
-      // Still in RingConstruct function
-      this.animationState.phase = 'initialization';
-      this.animationState.currentLine = targetLine;
-      return this.getAnimationState();
-    }
-
-    // Execute initialization
-    this.animationState.phase = 'initialization';
-    this.animationState.currentLine = 26;
-    this.animationState.message = 'Ring construction completed';
-
-    // Main execution
-    if (targetLine >= 53) { // main function
-      let round = 1;
-
-      while (this.eliminationOrder.length < this.n && round <= this.n) {
-        if (targetLine >= 58) { // for loop line
-          const bound = this.boundMachine(round);
-          this.animationState.message = `Round ${round}: Counting ${bound} steps`;
-          this.animationState.currentLine = 58;
-
-          if (targetLine >= 59) { // count function
-            const nodeToRemove = this.count(this.current, bound);
-            this.animationState.activeNode = nodeToRemove;
-            this.animationState.phase = 'counting';
-            this.animationState.currentLine = 59;
-            this.animationState.message = `Counting to node ${nodeToRemove.id}`;
-
-            if (targetLine >= 60) { // removeNode function
-              this.animationState.nodesToRemove = [nodeToRemove];
-              this.animationState.phase = 'removing';
-              this.animationState.currentLine = 60;
-              this.animationState.message = `Removing node ${nodeToRemove.id}`;
-
-              // Actually perform the removal
-              this.current = this.removeNode(nodeToRemove);
-              this.animationState.activeNode = this.current;
-              round++;
-            }
-          }
-
-          if (this.animationState.currentLine < targetLine) {
-            continue; // Continue to next round
-          } else {
-            break;
-          }
-        } else {
-          break;
+      // Count bound steps
+      let target = current;
+      for (let i = 1; i < bound; i++) {
+        target = target.next;
+        if (!target.exists) {
+          // Skip removed nodes
+          do {
+            target = target.next;
+          } while (!target.exists && target !== current);
         }
+      }
+
+      // Remove target node
+      target.exists = false;
+      eliminationOrder.push(target.id);
+      current = target.next;
+
+      // Skip removed nodes
+      while (!current.exists && eliminationOrder.length < 20) {
+        current = current.next;
       }
     }
 
-    return this.getAnimationState();
+    return eliminationOrder;
+  }
+
+  /**
+   * Initialize nodes for display
+   */
+  initializeNodes() {
+    this.nodes = Array.from({length: 20}, (_, i) => ({
+      id: i + 1,
+      exists: true,
+      x: 0,
+      y: 0
+    }));
+
+    // Set up circular links
+    for (let i = 0; i < 20; i++) {
+      this.nodes[i].next = this.nodes[(i + 1) % 20];
+      this.nodes[i].prev = this.nodes[(i - 1 + 20) % 20];
+    }
+  }
+
+  /**
+   * Generate all animation steps for the complete demo
+   */
+  generateAnimationSteps() {
+    const steps = [];
+    const bounds = [3, 5, 7, 13];
+    let current = this.nodes[0];
+
+    // Initial state
+    steps.push({
+      type: 'initialization',
+      message: 'Creating circular ring with 20 nodes',
+      line: 26,
+      nodes: this.nodes.map(n => ({...n})),
+      activeNode: null,
+      nodesToRemove: []
+    });
+
+    // Process each elimination round
+    for (let round = 1; round <= 20; round++) {
+      const bound = bounds[(round - 1) % 4];
+      const nodeIdToRemove = this.precomputedSequence[round - 1];
+
+      // Counting phase
+      steps.push({
+        type: 'counting',
+        message: `Round ${round}: Counting ${bound} steps from node ${current.id}`,
+        line: 59,
+        nodes: this.nodes.map(n => ({...n})),
+        activeNode: this.nodes[nodeIdToRemove - 1],
+        nodesToRemove: []
+      });
+
+      // Removal phase
+      steps.push({
+        type: 'removing',
+        message: `Removing node ${nodeIdToRemove}`,
+        line: 60,
+        nodes: this.nodes.map(n => ({...n, exists: n.id !== nodeIdToRemove})),
+        activeNode: this.nodes[nodeIdToRemove - 1],
+        nodesToRemove: [this.nodes[nodeIdToRemove - 1]]
+      });
+
+      // Update current to next existing node
+      do {
+        current = current.next;
+      } while (!current.exists && current !== this.nodes[0]);
+    }
+
+    // Complete state
+    steps.push({
+      type: 'complete',
+      message: 'Algorithm complete! All nodes eliminated.',
+      line: 62,
+      nodes: this.nodes.map(n => ({...n, exists: false})),
+      activeNode: null,
+      nodesToRemove: []
+    });
+
+    return steps;
   }
 
   /**
    * Get current animation state
    */
   getAnimationState() {
-    return {
-      ...this.animationState,
-      nodes: this.getCurrentNodes(),
-      eliminatedNodes: [...this.eliminationOrder],
-      totalSteps: this.stepHistory.length
-    };
-  }
-
-  /**
-   * Reset simulator to initial state
-   */
-  reset() {
-    this.current = this.head;
-    this.stepHistory = [];
-    this.currentStep = 0;
-    this.eliminationOrder = [];
-
-    // Reset all nodes to exist
-    let current = this.head;
-    do {
-      current.exists = true;
-      current = current.next;
-    } while (current !== this.head);
-
-    this.animationState = {
-      phase: 'initialization',
-      currentLine: 1,
-      activeNode: null,
-      nodesToRemove: [],
-      message: 'Starting algorithm...'
-    };
-  }
-
-  /**
-   * Execute complete algorithm
-   */
-  executeComplete() {
-    this.reset();
-
-    for (let i = 1; i <= this.n; i++) {
-      this.executeRound(i);
+    if (this.currentStep >= this.animationSteps.length) {
+      return this.animationSteps[this.animationSteps.length - 1];
     }
 
-    this.animationState.phase = 'complete';
-    this.animationState.message = 'Algorithm complete!';
+    return this.animationSteps[this.currentStep];
+  }
 
+  /**
+   * Get total number of steps
+   */
+  getTotalSteps() {
+    return this.animationSteps.length;
+  }
+
+  /**
+   * Execute to specific step
+   */
+  executeToStep(step) {
+    this.currentStep = Math.max(0, Math.min(step, this.animationSteps.length - 1));
     return this.getAnimationState();
   }
 
   /**
-   * Get step-by-step execution data
+   * Move to next step
    */
-  getStepExecutionData() {
-    const steps = [];
-
-    // Initial state
-    steps.push({
-      line: 10,
-      phase: 'initialization',
-      message: 'Creating first node with id = 1',
-      nodes: this.getCurrentNodes()
-    });
-
-    // Ring construction steps
-    for (let i = 2; i <= this.n; i++) {
-      steps.push({
-        line: 17,
-        phase: 'initialization',
-        message: `Creating node with id = ${i}`,
-        nodes: this.getCurrentNodes()
-      });
+  nextStep() {
+    if (this.currentStep < this.animationSteps.length - 1) {
+      this.currentStep++;
+      return true;
     }
+    return false;
+  }
 
-    // Making it circular
-    steps.push({
-      line: 23,
-      phase: 'initialization',
-      message: 'Connecting last node to first node (creating circle)',
-      nodes: this.getCurrentNodes()
-    });
-
-    // Main execution steps
-    for (let round = 1; round <= this.n; round++) {
-      const bound = this.boundMachine(round);
-
-      steps.push({
-        line: 58,
-        phase: 'counting',
-        message: `Round ${round}: Counting bound is ${bound}`,
-        nodes: this.getCurrentNodes()
-      });
-
-      const nodeToRemove = this.count(this.current, bound);
-
-      steps.push({
-        line: 59,
-        phase: 'counting',
-        message: `Counting ${bound} steps from node ${this.current.id} to node ${nodeToRemove.id}`,
-        nodes: this.getCurrentNodes(),
-        activeNode: nodeToRemove.id
-      });
-
-      steps.push({
-        line: 60,
-        phase: 'removing',
-        message: `Removing node ${nodeToRemove.id}`,
-        nodes: this.getCurrentNodes(),
-        removedNode: nodeToRemove.id
-      });
-
-      this.current = this.removeNode(nodeToRemove);
+  /**
+   * Move to previous step
+   */
+  previousStep() {
+    if (this.currentStep > 0) {
+      this.currentStep--;
+      return true;
     }
+    return false;
+  }
 
-    return steps;
+  /**
+   * Reset to beginning
+   */
+  reset() {
+    this.currentStep = 0;
+    this.initializeNodes();
   }
 }

@@ -33,7 +33,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import CodeDisplay from './components/CodeDisplay.vue'
 import CircleAnimation from './components/CircleAnimation.vue'
 import ControlPanel from './components/ControlPanel.vue'
@@ -48,19 +48,23 @@ const isPlaying = ref(false)
 const animationSpeed = ref(1)
 const playInterval = ref(null)
 
+// Performance optimization: debounce state
+const isExecuting = ref(false)
+const lineClickDebounce = ref(null)
+
 // Computed properties
 const animationState = computed(() => {
   return simulator.value?.getAnimationState() || {
-    phase: 'initialization',
-    currentLine: 1,
+    type: 'initialization',
     message: 'Initializing...',
     nodes: [],
-    eliminatedNodes: []
+    activeNode: null,
+    nodesToRemove: []
   }
 })
 
 const totalSteps = computed(() => {
-  return simulator.value?.stepHistory.length || 0
+  return simulator.value?.getTotalSteps() || 0
 })
 
 const isComplete = computed(() => {
@@ -68,7 +72,9 @@ const isComplete = computed(() => {
 })
 
 const eliminatedNodes = computed(() => {
-  return simulator.value?.eliminationOrder || []
+  const state = simulator.value?.getAnimationState()
+  if (!state) return []
+  return state.nodes.filter(n => !n.exists).map(n => n.id)
 })
 
 // Load C code
@@ -146,7 +152,7 @@ int main() {
 
 // Initialize simulator
 const initializeSimulator = () => {
-  simulator.value = new JosephusSimulator(20)
+  simulator.value = new JosephusSimulator()
   currentStep.value = 0
   activeLine.value = 1
 }
@@ -158,7 +164,7 @@ const handlePlay = () => {
   isPlaying.value = true
 
   playInterval.value = setInterval(() => {
-    if (currentStep.value < totalSteps.value) {
+    if (currentStep.value < totalSteps.value - 1) {
       handleStepForward()
     } else {
       handlePause()
@@ -180,12 +186,11 @@ const handleReset = () => {
 }
 
 const handleStepForward = () => {
-  if (currentStep.value < totalSteps.value) {
+  if (currentStep.value < totalSteps.value - 1) {
     currentStep.value++
-    const step = simulator.value.stepHistory[currentStep.value - 1]
-    if (step) {
-      activeLine.value = step.line
-      simulator.value.executeToLine(step.line)
+    const state = simulator.value.getAnimationState()
+    if (state && state.line) {
+      activeLine.value = state.line
     }
   }
 }
@@ -193,15 +198,11 @@ const handleStepForward = () => {
 const handleStepBackward = () => {
   if (currentStep.value > 0) {
     currentStep.value--
-    if (currentStep.value > 0) {
-      const step = simulator.value.stepHistory[currentStep.value - 1]
-      if (step) {
-        activeLine.value = step.line
-        simulator.value.executeToLine(step.line)
-      }
+    const state = simulator.value.getAnimationState()
+    if (state && state.line) {
+      activeLine.value = state.line
     } else {
       activeLine.value = 1
-      simulator.value.reset()
     }
   }
 }
@@ -211,15 +212,23 @@ const handleLineClick = (lineNumber) => {
   activeLine.value = lineNumber
 
   if (simulator.value) {
-    simulator.value.executeToLine(lineNumber)
-
-    // Update current step to match the line
-    const stepIndex = simulator.value.stepHistory.findIndex(
-      step => step.line === lineNumber
-    )
-    if (stepIndex !== -1) {
-      currentStep.value = stepIndex + 1
+    // Map line numbers to animation steps
+    let targetStep = 0
+    if (lineNumber >= 10 && lineNumber <= 26) {
+      targetStep = 0  // Initialization
+    } else if (lineNumber >= 58 && lineNumber <= 60) {
+      // Calculate round based on current step
+      const round = Math.floor((currentStep.value - 1) / 2) + 1
+      if (lineNumber === 58) {
+        targetStep = 1 + (round - 1) * 2  // Counting phase
+      } else if (lineNumber === 59) {
+        targetStep = 1 + (round - 1) * 2  // Counting phase
+      } else if (lineNumber === 60) {
+        targetStep = 2 + (round - 1) * 2  // Removal phase
+      }
     }
+
+    currentStep.value = Math.min(targetStep, simulator.value.getTotalSteps() - 1)
   }
 }
 
@@ -237,11 +246,14 @@ const handleAnimationComplete = () => {
   // Animation completed, could trigger next step if playing
 }
 
-// Watch for animation speed changes
-watch(animationSpeed, (newSpeed) => {
-  if (playInterval.value) {
-    handlePause()
-    handlePlay()
+// Cleanup on unmount to prevent memory leaks
+onUnmounted(() => {
+  handlePause() // Clear any running intervals
+
+  // Clear debounce timers
+  if (lineClickDebounce.value) {
+    clearTimeout(lineClickDebounce.value)
+    lineClickDebounce.value = null
   }
 })
 
@@ -259,7 +271,20 @@ onMounted(async () => {
 .main-container {
   display: flex;
   flex: 1;
-  height: calc(100vh - 60px); /* Match control panel height */
+  height: calc(100vh - 80px); /* Fixed height calculation */
+  overflow: hidden;
+}
+
+/* Ensure control panel is always visible */
+.control-panel {
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 1000 !important;
+  height: 80px !important;
+  background-color: #3c3836 !important;
+  border-top: 2px solid #504945 !important;
 }
 
 /* Global resets are already in gruvbox-dark.scss */

@@ -74,15 +74,22 @@ export function animateNodeHighlight(node, options = {}) {
  * @param {Function} callback - Callback function after animation
  */
 export function animateNodeRemoval(node, callback = () => {}) {
-  return anime({
-    targets: node,
-    scale: [1, 0],
-    opacity: [1, 0],
-    rotate: '360deg',
-    duration: 800,
-    easing: 'easeInBack',
-    complete: callback
-  });
+  try {
+    return anime({
+      targets: node,
+      scale: [1, 0],
+      opacity: [1, 0],
+      rotate: '360deg',
+      duration: 800,
+      easing: 'easeInBack',
+      complete: callback
+    });
+  } catch (error) {
+    console.warn('Failed to animate node removal:', error);
+    // Execute callback immediately and return resolved promise
+    callback();
+    return Promise.resolve();
+  }
 }
 
 /**
@@ -117,12 +124,22 @@ export function animateCounting(nodes, currentIndex, targetIndex, onComplete = (
  * @param {HTMLElement} link - The link element to animate
  */
 export function animateLinkHighlight(link) {
-  return anime({
-    targets: link,
-    strokeDashoffset: [anime.setDashoffset, 0],
-    duration: 600,
-    easing: 'easeInOutQuad'
-  });
+  try {
+    // For SVG line elements, we need to get the computed style
+    const computedStyle = getComputedStyle(link);
+    const length = link.getTotalLength?.() || 100;
+
+    return anime({
+      targets: link,
+      strokeDashoffset: [length, 0],
+      duration: 600,
+      easing: 'easeInOutQuad'
+    });
+  } catch (error) {
+    console.warn('Failed to animate link highlight:', error);
+    // Return a resolved promise as fallback
+    return Promise.resolve();
+  }
 }
 
 /**
@@ -158,25 +175,32 @@ export function animateFadeIn(element, delay = 0) {
 
 /**
  * Create pulse animation for active elements
- * @param {HTMLElement} element - Element to pulse
+ * @param {HTMLElement|HTMLElement[]} element - Element to pulse
  * @param {boolean} infinite - Whether to loop infinitely
  */
 export function animatePulse(element, infinite = false) {
-  const options = {
-    targets: element,
-    scale: [1, 1.05, 1],
-    duration: 1000,
-    easing: 'easeInOutQuad'
-  };
+  try {
+    const targets = Array.isArray(element) ? element : element;
 
-  if (infinite) {
-    options.loop = true;
-  } else {
-    options.direction = 'alternate';
-    options.loop = 2;
+    const options = {
+      targets: targets,
+      scale: [1, 1.05, 1],
+      duration: 1000,
+      easing: 'easeInOutQuad'
+    };
+
+    if (infinite) {
+      options.loop = true;
+    } else {
+      options.direction = 'alternate';
+      options.loop = 2;
+    }
+
+    return anime(options);
+  } catch (error) {
+    console.warn('Failed to animate pulse:', error);
+    return Promise.resolve();
   }
-
-  return anime(options);
 }
 
 // Export anime.js for direct use if needed
