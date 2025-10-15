@@ -84,9 +84,16 @@ const initializeCCode = () => {
 
 // Initialize simulator
 const initializeSimulator = () => {
+  console.log('=== DEBUG: App initializeSimulator ===')
   simulator.value = new JosephusSimulator()
   currentStep.value = 0
   activeLine.value = 1
+
+  console.log('Simulator initialized')
+  console.log('Total steps:', simulator.value.getTotalSteps())
+  console.log('Initial animation state type:', simulator.value.getAnimationState().type)
+  console.log('Initial nodes count:', simulator.value.getAnimationState().nodes.length)
+  console.log('=== END DEBUG: initializeSimulator ===')
 }
 
 // Control handlers
@@ -118,9 +125,8 @@ const handleReset = () => {
 }
 
 const handleStepForward = () => {
-  if (currentStep.value < totalSteps.value - 1) {
-    currentStep.value++
-    simulator.value.executeToStep(currentStep.value)
+  if (simulator.value && simulator.value.nextStep()) {
+    currentStep.value = simulator.value.currentStep
     const state = simulator.value.getAnimationState()
     if (state && state.line) {
       activeLine.value = state.line
@@ -129,9 +135,8 @@ const handleStepForward = () => {
 }
 
 const handleStepBackward = () => {
-  if (currentStep.value > 0) {
-    currentStep.value--
-    simulator.value.executeToStep(currentStep.value)
+  if (simulator.value && simulator.value.previousStep()) {
+    currentStep.value = simulator.value.currentStep
     const state = simulator.value.getAnimationState()
     if (state && state.line) {
       activeLine.value = state.line
@@ -148,21 +153,49 @@ const handleLineClick = (lineNumber) => {
   if (simulator.value) {
     // Map line numbers to animation steps
     let targetStep = 0
+
+    // RingConstruct function (lines 10-26)
     if (lineNumber >= 10 && lineNumber <= 26) {
-      targetStep = 0  // Initialization
-    } else if (lineNumber >= 58 && lineNumber <= 60) {
-      // Calculate round based on current step
-      const round = Math.floor((currentStep.value - 1) / 2) + 1
-      if (lineNumber === 58) {
-        targetStep = 1 + (round - 1) * 2  // Counting phase
-      } else if (lineNumber === 59) {
-        targetStep = 1 + (round - 1) * 2  // Counting phase
+      targetStep = 0  // Initialization phase
+    }
+    // boundMachine function (lines 28-31)
+    else if (lineNumber >= 28 && lineNumber <= 31) {
+      targetStep = 0  // Also initialization
+    }
+    // count function (lines 33-40)
+    else if (lineNumber >= 33 && lineNumber <= 40) {
+      targetStep = 0  // Also initialization
+    }
+    // removeNode function (lines 42-49)
+    else if (lineNumber >= 42 && lineNumber <= 49) {
+      targetStep = 0  // Also initialization
+    }
+    // main function - the actual algorithm (lines 51-61)
+    else if (lineNumber >= 51 && lineNumber <= 61) {
+      if (lineNumber === 55) {
+        targetStep = 0  // Initialization: first = RingConstruct(N);
+      } else if (lineNumber === 56) {
+        targetStep = 0  // Loop start: for (int i = 1; i <= N; i++)
+      } else if (lineNumber === 57) {
+        // Counting phase: find the right round based on the step
+        const round = Math.floor(currentStep.value / 2) + 1
+        targetStep = Math.min((round - 1) * 2 + 1, simulator.value.getTotalSteps() - 1)
+      } else if (lineNumber === 58) {
+        // Removal phase: find the right round based on the step
+        const round = Math.floor(currentStep.value / 2) + 1
+        targetStep = Math.min((round - 1) * 2 + 2, simulator.value.getTotalSteps() - 1)
       } else if (lineNumber === 60) {
-        targetStep = 2 + (round - 1) * 2  // Removal phase
+        targetStep = simulator.value.getTotalSteps() - 1  // Complete state: return 0;
+      } else {
+        // Default to current step for other lines in main
+        targetStep = currentStep.value
       }
     }
 
-    currentStep.value = Math.min(targetStep, simulator.value.getTotalSteps() - 1)
+    // Sync simulator state
+    targetStep = Math.min(targetStep, simulator.value.getTotalSteps() - 1)
+    simulator.value.executeToStep(targetStep)
+    currentStep.value = simulator.value.currentStep
   }
 }
 

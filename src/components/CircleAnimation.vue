@@ -5,16 +5,17 @@
         ref="svgContainer"
         :width="svgSize"
         :height="svgSize"
-        viewBox="0 0 600 600"
+        viewBox="0 0 900 900"
         class="circle-svg"
       >
         <!-- Render circle links -->
         <g class="links">
           <circle-link
             v-for="link in links"
-            :key="`link-${link.from}-${link.to}`"
+            :key="`link-${link.from}-${link.to}-${link.type}`"
             :link="link"
-            :active="activeLinks.has(`${link.from}-${link.to}`)"
+            :state="link.state"
+            :active="activeLinks.has(`${link.from}-${link.to}-${link.type}`)"
           />
         </g>
 
@@ -24,7 +25,7 @@
             v-for="node in nodes"
             :key="node.id"
             :node="node"
-            :position="getNodePosition(node.id, existingNodes.length)"
+            :position="getNodePosition(node.id, 20)"
             :active="activeNodeId === node.id"
             :to-remove="nodesToRemove.includes(node.id)"
             :removed="!node.exists"
@@ -35,8 +36,8 @@
         <!-- Center info -->
         <g class="center-info">
           <text
-            x="300"
-            y="300"
+            x="450"
+            y="450"
             text-anchor="middle"
             class="info-text"
           >
@@ -44,8 +45,8 @@
           </text>
 
           <text
-            x="300"
-            y="320"
+            x="450"
+            y="470"
             text-anchor="middle"
             class="round-text"
             v-if="currentRound > 0"
@@ -84,10 +85,25 @@ const activeLinks = computed(() => {
   const links = new Set()
   const activeNode = props.animationState.activeNode
 
+  // Highlight both arrows of the active node (next and prev)
   if (activeNode && activeNode.exists) {
-    // Add links from and to active node
-    links.add(`${activeNode.prev?.id || 0}-${activeNode.id}`)
-    links.add(`${activeNode.id}-${activeNode.next?.id || 0}`)
+    // Highlight next arrow - 使用ID信息
+    const nextNodeId = activeNode.nextId || (activeNode.next && activeNode.next.id)
+    if (nextNodeId) {
+      const nextNode = nodes.value.find(n => n.id === nextNodeId)
+      if (nextNode && nextNode.exists) {
+        links.add(`${activeNode.id}-${nextNodeId}-next`)
+      }
+    }
+
+    // Highlight prev arrow - 使用ID信息
+    const prevNodeId = activeNode.prevId || (activeNode.prev && activeNode.prev.id)
+    if (prevNodeId) {
+      const prevNode = nodes.value.find(n => n.id === prevNodeId)
+      if (prevNode && prevNode.exists) {
+        links.add(`${activeNode.id}-${prevNodeId}-prev`)
+      }
+    }
   }
 
   return links
@@ -104,19 +120,124 @@ const animationMessage = computed(() => {
 
 const links = computed(() => {
   const nodeLinks = []
-  const existingNodes = nodes.value.filter(n => n.exists)
 
-  existingNodes.forEach(node => {
-    const nextNode = nodes.value.find(n => n.id === node.next?.id)
-    if (nextNode && nextNode.exists) {
-      nodeLinks.push({
-        from: node.id,
-        to: nextNode.id,
-        fromPos: getNodePosition(node.id, 20),
-        toPos: getNodePosition(nextNode.id, 20)
-      })
+  
+  // Create bidirectional arrows: each node has both 'next' and 'prev' arrows
+  nodes.value.forEach(node => {
+    // 修复：允许所有节点创建箭头，但根据状态设置不同样式
+    // 这样删除节点后，相邻节点的连接箭头可以正确重新指向
+
+    // Next arrow (clockwise direction) - 通用重新连接逻辑
+    let nextNodeId = node.nextId || (node.next && node.next.id)
+
+    // 通用逻辑：如果next指向的节点被删除，找到下一个存在的节点
+    if (nextNodeId) {
+      const targetNode = nodes.value.find(n => n.id === nextNodeId)
+      if (targetNode && !targetNode.exists) {
+        // 找到下一个存在的节点
+        let searchId = nextNodeId
+        let found = false
+        for (let i = 0; i < 20 && !found; i++) {
+          searchId = (searchId % 20) + 1 // 1->2, 2->3, ..., 20->1
+          const searchNode = nodes.value.find(n => n.id === searchId)
+          if (searchNode && searchNode.exists) {
+            nextNodeId = searchId
+            found = true
+          }
+        }
+      }
+    }
+
+    if (nextNodeId) {
+      const nextNode = nodes.value.find(n => n.id === nextNodeId)
+      if (nextNode) {
+        let nextState = 'active'
+
+        // 根据节点和目标状态确定箭头状态
+        if (!node.exists) {
+          // 被删除的节点：箭头虚化
+          nextState = 'removed'
+        } else if (!nextNode.exists) {
+          // 指向被删除节点的箭头：虚化
+          nextState = 'fading'
+        } else {
+          // 正常连接状态：强制为active
+          nextState = 'active'
+        }
+
+        const edgePoints = getArrowEdgePoints(node.id, nextNodeId, 32, 'next')
+
+        nodeLinks.push({
+          from: node.id,
+          to: nextNodeId,
+          type: 'next',
+          direction: 'clockwise',
+          state: nextState,
+          fromPos: edgePoints.start,
+          toPos: edgePoints.end,
+          curvature: edgePoints.curvature
+        })
+      }
+    }
+
+    // Prev arrow (counter-clockwise direction) - 通用重新连接逻辑
+    let prevNodeId = node.prevId || (node.prev && node.prev.id)
+
+    // 通用逻辑：如果prev指向的节点被删除，找到上一个存在的节点
+    if (prevNodeId) {
+      const targetNode = nodes.value.find(n => n.id === prevNodeId)
+      if (targetNode && !targetNode.exists) {
+        // 找到上一个存在的节点
+        let searchId = prevNodeId
+        let found = false
+        for (let i = 0; i < 20 && !found; i++) {
+          searchId = (searchId - 2 + 20) % 20 + 1 // 1->20, 2->1, ..., 20->19
+          const searchNode = nodes.value.find(n => n.id === searchId)
+          if (searchNode && searchNode.exists) {
+            prevNodeId = searchId
+            found = true
+          }
+        }
+      }
+    }
+
+    if (prevNodeId) {
+      const prevNode = nodes.value.find(n => n.id === prevNodeId)
+      if (prevNode) {
+        let prevState = 'active'
+
+        // 根据节点和目标状态确定箭头状态
+        if (!node.exists) {
+          // 被删除的节点：箭头虚化
+          prevState = 'removed'
+        } else if (!prevNode.exists) {
+          // 指向被删除节点的箭头：虚化
+          prevState = 'fading'
+        } else {
+          // 正常连接状态：强制为active
+          prevState = 'active'
+        }
+
+        const edgePoints = getArrowEdgePoints(node.id, prevNodeId, 32, 'prev')
+
+        nodeLinks.push({
+          from: node.id,
+          to: prevNodeId,
+          type: 'prev',
+          direction: 'counter-clockwise',
+          state: prevState,
+          fromPos: edgePoints.start,
+          toPos: edgePoints.end,
+          curvature: edgePoints.curvature
+        })
+      }
     }
   })
+
+  // Clean bidirectional arrow system completed
+  // Next arrows: outer ring (clockwise)
+  // Prev arrows: inner ring (counter-clockwise)
+  // No special reconnection arrows - existing arrows dynamically update
 
   return nodeLinks
 })
@@ -127,13 +248,96 @@ const links = computed(() => {
 function getNodePosition(nodeId, totalNodes) {
   // Fixed: Always use 20 nodes for circular layout
   const angle = (nodeId - 1) * (2 * Math.PI / 20) - Math.PI / 2
-  const radius = 200
-  const centerX = 300
-  const centerY = 300
+  const radius = 420  // Increased from 400 to 420 for better spacing
+  const centerX = 450
+  const centerY = 450
 
   return {
     x: centerX + radius * Math.cos(angle),
     y: centerY + radius * Math.sin(angle)
+  }
+}
+
+/**
+ * Calculate arrow start/end points with dual-ring separation system
+ */
+function getArrowEdgePoints(fromNodeId, toNodeId, nodeRadius = 32, arrowType = 'next') {
+  const centerX = 450
+  const centerY = 450
+  const baseRadius = 420 // Current node radius
+
+  // Determine ring radius based on arrow type
+  let ringRadius
+  if (arrowType === 'next') {
+    // Next arrows: outer ring (clockwise)
+    ringRadius = baseRadius + 25 // 445px
+  } else if (arrowType === 'prev') {
+    // Prev arrows: inner ring (counter-clockwise)
+    ringRadius = baseRadius - 25 // 395px
+  }
+
+  // Calculate node positions on their respective rings
+  const fromAngle = (fromNodeId - 1) * (2 * Math.PI / 20) - Math.PI / 2
+  const toAngle = (toNodeId - 1) * (2 * Math.PI / 20) - Math.PI / 2
+
+  const fromPos = {
+    x: centerX + ringRadius * Math.cos(fromAngle),
+    y: centerY + ringRadius * Math.sin(fromAngle)
+  }
+
+  const toPos = {
+    x: centerX + ringRadius * Math.cos(toAngle),
+    y: centerY + ringRadius * Math.sin(toAngle)
+  }
+
+  // Calculate direction vector from center to center
+  const dx = toPos.x - fromPos.x
+  const dy = toPos.y - fromPos.y
+  const distance = Math.sqrt(dx * dx + dy * dy)
+
+  // Normalize to unit vector
+  const unitX = dx / distance
+  const unitY = dy / distance
+
+  // Calculate perpendicular vector for curvature
+  const perpX = -unitY
+  const perpY = unitX
+
+  // Determine curvature based on arrow type and ring
+  let curvatureOffset = 0
+
+  if (arrowType === 'next') {
+    // Next arrows on outer ring: curve outward
+    curvatureOffset = 30
+  } else if (arrowType === 'prev') {
+    // Prev arrows on inner ring: curve inward
+    curvatureOffset = -20
+  }
+
+  // Calculate control point for curved path
+  const controlPoint = {
+    x: (fromPos.x + toPos.x) / 2 + perpX * curvatureOffset,
+    y: (fromPos.y + toPos.y) / 2 + perpY * curvatureOffset
+  }
+
+  // Calculate edge points (account for node radius)
+  const startEdge = {
+    x: fromPos.x + unitX * nodeRadius,
+    y: fromPos.y + unitY * nodeRadius
+  }
+
+  const endEdge = {
+    x: toPos.x - unitX * nodeRadius,
+    y: toPos.y - unitY * nodeRadius
+  }
+
+  return {
+    start: startEdge,
+    end: endEdge,
+    controlPoint: controlPoint,
+    ringRadius: ringRadius,
+    curvature: curvatureOffset,
+    arrowType: arrowType
   }
 }
 
@@ -185,8 +389,8 @@ const applyNodeClass = (element, className) => {
  * Animate ring initialization
  */
 const animateInitialization = () => {
-  // Animation is now handled by Vue's reactive class bindings
-  console.log('Initialization animation started')
+  // Nodes are now visible by default, no need for manual opacity manipulation
+  console.log('Ring initialization complete')
 }
 
 /**
@@ -247,8 +451,8 @@ onMounted(() => {
 .circle-svg {
   width: 100%;
   height: 100%;
-  max-width: 600px;
-  max-height: 600px;
+  max-width: 800px;
+  max-height: 800px;
 }
 
 .info-text {
@@ -268,60 +472,14 @@ onMounted(() => {
 
 /* Node animation classes */
 .circle-node {
-  opacity: 0;
-  transform: scale(0.5);
-  transition: all 0.5s ease;
-}
-
-.circle-node.node-visible {
   opacity: 1;
-  transform: scale(1);
-}
-
-.circle-node.node-active {
-  filter: brightness(1.3);
-  transform: scale(1.1);
-}
-
-.circle-node.node-removing {
-  filter: brightness(1.5);
-  transform: scale(1.2);
-  animation: node-removal 0.5s ease-out;
+  transition: opacity 0.3s ease;
 }
 
 .circle-node.node-removed {
   opacity: 0.3;
-  transform: scale(0.8);
 }
 
-.circle-node.node-complete {
-  animation: node-complete 1s ease-in-out;
-}
-
-@keyframes node-removal {
-  0% {
-    transform: scale(1);
-    filter: brightness(1);
-  }
-  50% {
-    transform: scale(1.3);
-    filter: brightness(1.5);
-  }
-  100% {
-    transform: scale(0.8);
-    filter: brightness(0.8);
-    opacity: 0.3;
-  }
-}
-
-@keyframes node-complete {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.2);
-  }
-}
 
 /* Responsive design */
 @media (max-width: 768px) {
@@ -331,8 +489,8 @@ onMounted(() => {
   }
 
   .circle-svg {
-    max-width: 400px;
-    max-height: 400px;
+    max-width: 500px;
+    max-height: 500px;
   }
 
   .info-text {
