@@ -12,6 +12,7 @@
       :class="circleClasses"
     />
     <text
+      v-if="node.hasId !== false"
       class="node-text"
       :class="textClasses"
       y="0"
@@ -81,14 +82,14 @@ const handleClick = () => {
 }
 
 .node-circle {
-  fill: #3c3836;
-  stroke: #ebdbb2;
+  fill: #1d2021;
+  stroke: #928374;
   stroke-width: 2;
   transition: all 0.3s ease;
 }
 
 .node-circle.active {
-  fill: #458588;
+  fill: #076678;
   stroke: #83a598;
   stroke-width: 3;
 }
@@ -106,8 +107,8 @@ const handleClick = () => {
 }
 
 .node-text {
-  fill: #ebdbb2;
-  font-size: 18px;
+  fill: #000000;
+  font-size: 22px;
   font-weight: bold;
   text-anchor: middle;
   dominant-baseline: middle;
@@ -117,11 +118,12 @@ const handleClick = () => {
 
 .node-text.active,
 .node-text.to-remove {
-  fill: #fbf1c7;
+  fill: #000000;
+  font-weight: bold;
 }
 
 .node-text.removed {
-  fill: #928374;
+  fill: #665c54;
 }
 
 @keyframes pulse {
