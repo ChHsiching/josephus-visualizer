@@ -1,0 +1,51 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Build project
+      run: npm run build
+
+    - name: Fix paths for GitHub Pages
+      run: |
+        # 修改 index.html 中的绝对路径为相对路径
+        sed -i 's|href="/|href="./|g' dist/index.html
+        sed -i 's|src="/|src="./|g' dist/index.html
+
+    - name: Create 404.html for SPA routing
+      run: cp dist/index.html dist/404.html
+
+    - name: Add repository name to base paths
+      run: |
+        # 为所有资源路径添加仓库名前缀
+        sed -i 's|href="./assets/|href="./josephus-visualizer/assets/|g' dist/index.html
+        sed -i 's|src="./assets/|src="./josephus-visualizer/assets/|g' dist/index.html
+        sed -i 's|href="./vite.svg|href="./josephus-visualizer/vite.svg|g' dist/index.html
+        # 同样处理 404.html
+        sed -i 's|href="./assets/|href="./josephus-visualizer/assets/|g' dist/404.html
+        sed -i 's|src="./assets/|src="./josephus-visualizer/assets/|g' dist/404.html
+        sed -i 's|href="./vite.svg|href="./josephus-visualizer/vite.svg|g' dist/404.html
+
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./dist
