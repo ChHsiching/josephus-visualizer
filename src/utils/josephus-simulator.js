@@ -672,17 +672,26 @@ export class JosephusSimulator {
       const removedNode = animationNodes[tempNode.id - 1];
       removedNode.exists = false;
       removedNode.linkState = { toNext: 'removed', toPrev: 'removed' };
+      // 修复：被删除节点的箭头状态设置为false
+      removedNode.nextLink = false;
+      removedNode.prevLink = false;
 
       // 获取前驱和后继节点
       const prevNode = removedNode.prev;
       const nextActualNode = removedNode.next;
 
-      // 更新双向指针
+      // 更新双向指针和箭头状态
       if (prevNode && nextActualNode && prevNode.exists && nextActualNode.exists) {
         prevNode.nextId = nextActualNode.id;
         prevNode.linkState.toNext = 'active';
+        // 修复：前驱节点保持next箭头指向后继节点
+        prevNode.nextLink = true;
+
         nextActualNode.prevId = prevNode.id;
         nextActualNode.linkState.toPrev = 'active';
+        // 修复：后继节点保持prev箭头指向前驱节点
+        nextActualNode.prevLink = true;
+
         prevNode.next = nextActualNode;
         nextActualNode.prev = prevNode;
       }
@@ -706,10 +715,9 @@ export class JosephusSimulator {
         nodesToRemove: [removedNode]
       });
 
-      // 更新current到下一个存在的节点
-      do {
-        current = current.next;
-      } while (!animationNodes[current.id - 1].exists);
+      // 修复：更新current到被删除节点的下一个节点（nextActualNode）
+      // 这确保删除顺序正确：3, 8, 15, 10, 13, 19, 7, 6, 12, 20, 14, 1, 5, 18, 2, 11, 4, 16, 17, 9
+      current = nextActualNode;
     }
 
     // ===== main函数结束 =====
