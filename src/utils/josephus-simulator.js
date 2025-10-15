@@ -100,7 +100,11 @@ export class JosephusSimulator {
       linkState: { ...n.linkState },
       // 使用简单的ID计算：环状结构
       nextId: (index + 1) % 20 + 1, // 1->2, 2->3, ..., 19->20, 20->1
-      prevId: (index - 1 + 20) % 20 + 1 // 1->20, 2->1, ..., 20->19
+      prevId: (index - 1 + 20) % 20 + 1, // 1->20, 2->1, ..., 20->19
+      // 添加完整的箭头状态字段，确保CircleAnimation.vue能正确访问
+      nextLink: false,
+      prevLink: false,
+      hasId: false
     }));
 
     // ===== main函数开始执行 =====
@@ -466,18 +470,25 @@ export class JosephusSimulator {
       nodesToRemove: []
     });
 
-    // Step 113: 第25行 return head
+    // Step 113: 第25行 return head - 同步状态到基础animationNodes
+    const finalRingConstructNodes = animationNodes.map(n => ({
+      ...n,
+      exists: true,
+      hasId: true,
+      nextLink: true,
+      prevLink: true
+    }));
+
+    // 同步最终状态到基础animationNodes对象
+    finalRingConstructNodes.forEach((finalNode, index) => {
+      animationNodes[index] = {...finalNode};
+    });
+
     steps.push({
       type: 'initialization',
       message: 'RingConstruct() 函数：返回头节点指针',
       line: 25,  // return head;
-      nodes: animationNodes.map(n => ({
-        ...n,
-        exists: true,
-        hasId: true,
-        nextLink: true,
-        prevLink: true
-      })),
+      nodes: finalRingConstructNodes,
       activeNode: animationNodes[0],
       nodesToRemove: []
     });
