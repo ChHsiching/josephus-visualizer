@@ -87,7 +87,7 @@ const initializeSimulator = () => {
   console.log('=== DEBUG: App initializeSimulator ===')
   simulator.value = new JosephusSimulator()
   currentStep.value = 0
-  activeLine.value = 1
+  activeLine.value = 52  // 修复：从第52行main函数的pNode first;开始，而不是第1行
 
   console.log('Simulator initialized')
   console.log('Total steps:', simulator.value.getTotalSteps())
@@ -151,97 +151,116 @@ const handleLineClick = (lineNumber) => {
   activeLine.value = lineNumber
 
   if (simulator.value) {
-    // Map line numbers to animation steps with fine-grained function-level details
+    // Map line numbers to animation steps with line-by-line execution details
     let targetStep = 0
     const totalSteps = simulator.value.getTotalSteps()
 
-    // RingConstruct function initialization (lines 13-24)
-    if (lineNumber >= 13 && lineNumber <= 24) {
-      // Detailed initialization steps:
-      // Line 13: Creating first node
-      if (lineNumber === 13) {
-        targetStep = 0
+    // main函数开始 (lines 54-62)
+    if (lineNumber >= 54 && lineNumber <= 62) {
+      if (lineNumber === 54) {
+        targetStep = 1  // pNode first;
+      } else if (lineNumber === 55) {
+        targetStep = 2  // pNode toRemove;
+      } else if (lineNumber === 56) {
+        targetStep = 3  // int i;
+      } else if (lineNumber === 57) {
+        targetStep = 4  // first = RingConstruct(N);
+      } else if (lineNumber === 58) {
+        targetStep = 115  // for (int i = 1; i <= N; i++)
+      } else if (lineNumber === 59) {
+        // This maps to count function call in current round
+        const round = Math.floor(currentStep.value / 10) + 1
+        targetStep = Math.min(116 + (round - 1) * 10, totalSteps - 2)
+      } else if (lineNumber === 60) {
+        // This maps to removeNode function call in current round
+        const round = Math.floor(currentStep.value / 10) + 1
+        targetStep = Math.min(124 + (round - 1) * 10, totalSteps - 2)
+      } else if (lineNumber === 61) {
+        targetStep = 316  // for loop结束
+      } else if (lineNumber === 62) {
+        targetStep = 317  // return 0;
       }
-      // Line 14: Setting first node ID
-      else if (lineNumber === 14) {
-        targetStep = 1
+    }
+    // RingConstruct函数 (lines 11-25)
+    else if (lineNumber >= 11 && lineNumber <= 25) {
+      if (lineNumber === 11) {
+        targetStep = 5  // int i; pNode head, p, q;
+      } else if (lineNumber === 13) {
+        targetStep = 6  // head = malloc()
+      } else if (lineNumber === 14) {
+        targetStep = 7  // head->id = 1;
+      } else if (lineNumber === 15) {
+        targetStep = 8  // p = head;
+      } else if (lineNumber === 16) {
+        targetStep = 9  // for循环开始
       }
-      // Lines 17-21: Node creation loop (5 steps per node)
+      // Lines 17-21: for循环体 (每个节点5步)
       else if (lineNumber >= 17 && lineNumber <= 21) {
-        const nodeIndex = lineNumber - 17  // 0 to 4
-        const nodeId = 2  // Starting from node 2
-        targetStep = 2 + (nodeId - 2) * 5 + nodeIndex
-      }
-      // Line 23: Circular link from last to first
-      else if (lineNumber === 23) {
-        targetStep = totalSteps - 20 - 3  // Near the end of initialization
-      }
-      // Line 24: Circular link from first to last
-      else if (lineNumber === 24) {
-        targetStep = totalSteps - 20 - 2  // Just before main loop starts
+        // 根据当前所在回合和具体行号计算目标步骤
+        const stepInLoop = lineNumber - 17  // 0 to 4
+        // 找到当前在哪个节点的创建过程中
+        let currentRound = Math.floor((currentStep.value - 10) / 5) + 2
+        if (currentRound < 2 || currentRound > 20) {
+          currentRound = 2  // 默认从第2个节点开始
+        }
+        targetStep = 10 + (currentRound - 2) * 5 + stepInLoop
+        targetStep = Math.max(10, Math.min(targetStep, 109))  // 限制在for循环范围内
+      } else if (lineNumber === 22) {
+        targetStep = 110  // for循环结束
+      } else if (lineNumber === 23) {
+        targetStep = 111  // p->next = head;
+      } else if (lineNumber === 24) {
+        targetStep = 112  // head->pre = p;
+      } else if (lineNumber === 25) {
+        targetStep = 113  // return head;
       }
     }
     // boundMachine function (lines 28-31)
     else if (lineNumber >= 28 && lineNumber <= 31) {
-      // boundMachine call happens in each round
-      const round = Math.floor(currentStep.value / 8) + 1
-      targetStep = Math.min(25 + (round - 1) * 8, totalSteps - 2)
+      const round = Math.floor(currentStep.value / 10) + 1
+      if (lineNumber === 29) {
+        targetStep = Math.min(117 + (round - 1) * 10, totalSteps - 2)
+      } else if (lineNumber === 30) {
+        targetStep = Math.min(118 + (round - 1) * 10, totalSteps - 2)
+      }
     }
     // count function (lines 33-40)
     else if (lineNumber >= 33 && lineNumber <= 40) {
-      // count function execution in each round
-      const round = Math.floor(currentStep.value / 8) + 1
-      if (lineNumber === 35) {
-        // Initialize q pointer
-        targetStep = Math.min(25 + (round - 1) * 8 + 1, totalSteps - 2)
+      const round = Math.floor(currentStep.value / 10) + 1
+      if (lineNumber === 34) {
+        targetStep = Math.min(119 + (round - 1) * 10, totalSteps - 2)
+      } else if (lineNumber === 35) {
+        targetStep = Math.min(120 + (round - 1) * 10, totalSteps - 2)
       } else if (lineNumber === 36) {
-        // For loop start
-        targetStep = Math.min(25 + (round - 1) * 8 + 2, totalSteps - 2)
+        targetStep = Math.min(121 + (round - 1) * 10, totalSteps - 2)
       } else if (lineNumber === 37) {
         // q = q->next (multiple steps depending on bound)
-        const boundIndex = (round - 1) % 4
-        const bound = [3, 5, 7, 13][boundIndex]
-        const currentStepInRound = (currentStep.value - 25 - (round - 1) * 8) % 8
-        if (currentStepInRound >= 3 && currentStepInRound <= 3 + bound - 2) {
+        const bounds = [3, 5, 7, 13]
+        const bound = bounds[(round - 1) % 4]
+        const currentStepInRound = (currentStep.value - 116 - (round - 1) * 10) % 10
+
+        if (currentStepInRound >= 6 && currentStepInRound <= 6 + bound - 2) {
           targetStep = currentStep.value  // Stay in current counting step
         } else {
-          targetStep = Math.min(25 + (round - 1) * 8 + 3, totalSteps - 2)
+          targetStep = Math.min(122 + (round - 1) * 10, totalSteps - 2)
         }
+      } else if (lineNumber === 39) {
+        targetStep = Math.min(123 + (round - 1) * 10, totalSteps - 2)
       }
     }
     // removeNode function (lines 42-49)
     else if (lineNumber >= 42 && lineNumber <= 49) {
-      // removeNode function execution in each round
-      const round = Math.floor(currentStep.value / 8) + 1
-      if (lineNumber === 43) {
-        targetStep = Math.min(25 + (round - 1) * 8 + 5, totalSteps - 2)
-      } else if (lineNumber === 44) {
-        targetStep = Math.min(25 + (round - 1) * 8 + 6, totalSteps - 2)
+      const round = Math.floor(currentStep.value / 10) + 1
+      if (lineNumber === 44) {
+        targetStep = Math.min(125 + (round - 1) * 10, totalSteps - 2)
       } else if (lineNumber === 45) {
-        targetStep = Math.min(25 + (round - 1) * 8 + 7, totalSteps - 2)
-      } else if (lineNumber >= 46 && lineNumber <= 49) {
-        targetStep = Math.min(25 + (round - 1) * 8 + 8, totalSteps - 2)
-      }
-    }
-    // main function - the actual algorithm (lines 51-61)
-    else if (lineNumber >= 51 && lineNumber <= 61) {
-      if (lineNumber === 55) {
-        targetStep = 0  // RingConstruct call starts
-      } else if (lineNumber === 56) {
-        targetStep = 25  // Main for loop starts (after initialization)
-      } else if (lineNumber === 57) {
-        // This maps to count function call
-        const round = Math.floor(currentStep.value / 8) + 1
-        targetStep = Math.min(25 + (round - 1) * 8, totalSteps - 2)
-      } else if (lineNumber === 58) {
-        // This maps to removeNode function call
-        const round = Math.floor(currentStep.value / 8) + 1
-        targetStep = Math.min(25 + (round - 1) * 8 + 5, totalSteps - 2)
-      } else if (lineNumber === 60) {
-        targetStep = totalSteps - 1  // Complete state: return 0;
-      } else {
-        // Default to current step for other lines in main
-        targetStep = currentStep.value
+        targetStep = Math.min(126 + (round - 1) * 10, totalSteps - 2)
+      } else if (lineNumber === 46) {
+        targetStep = Math.min(127 + (round - 1) * 10, totalSteps - 2)
+      } else if (lineNumber === 48) {
+        targetStep = Math.min(128 + (round - 1) * 10, totalSteps - 2)
+      } else if (lineNumber === 49) {
+        targetStep = Math.min(129 + (round - 1) * 10, totalSteps - 2)
       }
     }
 

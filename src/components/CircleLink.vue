@@ -60,8 +60,8 @@ const props = defineProps({
   },
   state: {
     type: String,
-    default: 'active', // 'active' | 'fading' | 'removed' | 'new-connection'
-    validator: (value) => ['active', 'fading', 'removed', 'new-connection'].includes(value)
+    default: 'active', // 'active' | 'fading' | 'removed' | 'new-connection' | 'inactive'
+    validator: (value) => ['active', 'fading', 'removed', 'new-connection', 'inactive'].includes(value)
   },
   active: {
     type: Boolean,
@@ -122,6 +122,12 @@ const pathData = computed(() => {
 }
 
 /* State-based styles */
+.circle-link.state-inactive {
+  opacity: 0;
+  stroke-width: 0;
+  stroke-dasharray: none;
+}
+
 .circle-link.state-fading {
   opacity: 0.3;
   stroke-width: 1.5;

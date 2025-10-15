@@ -127,41 +127,28 @@ const links = computed(() => {
     // 修复：允许所有节点创建箭头，但根据状态设置不同样式
     // 这样删除节点后，相邻节点的连接箭头可以正确重新指向
 
-    // Next arrow (clockwise direction) - 通用重新连接逻辑
-    let nextNodeId = node.nextId || (node.next && node.next.id)
+    // Next arrow (clockwise direction) - 修复：nextLink状态优先级高于nextId
+    let nextNodeId = null
 
-    // 通用逻辑：如果next指向的节点被删除，找到下一个存在的节点
-    if (nextNodeId) {
-      const targetNode = nodes.value.find(n => n.id === nextNodeId)
-      if (targetNode && !targetNode.exists) {
-        // 找到下一个存在的节点
-        let searchId = nextNodeId
-        let found = false
-        for (let i = 0; i < 20 && !found; i++) {
-          searchId = (searchId % 20) + 1 // 1->2, 2->3, ..., 20->1
-          const searchNode = nodes.value.find(n => n.id === searchId)
-          if (searchNode && searchNode.exists) {
-            nextNodeId = searchId
-            found = true
-          }
-        }
-      }
+    // 只有当nextLink明确为true时，才获取nextId并显示箭头
+    if (node.nextLink === true) {
+      nextNodeId = node.nextId || (node.next && node.next.id)
     }
 
     if (nextNodeId) {
       const nextNode = nodes.value.find(n => n.id === nextNodeId)
       if (nextNode) {
-        let nextState = 'active'
+        let nextState = 'inactive'
 
-        // 根据节点和目标状态确定箭头状态
+        // 根据新的节点状态系统确定箭头状态
         if (!node.exists) {
           // 被删除的节点：箭头虚化
           nextState = 'removed'
         } else if (!nextNode.exists) {
           // 指向被删除节点的箭头：虚化
           nextState = 'fading'
-        } else {
-          // 正常连接状态：强制为active
+        } else if (node.nextLink === true && nextNode.exists) {
+          // 明确设置为true且目标节点存在：显示箭头
           nextState = 'active'
         }
 
@@ -180,41 +167,28 @@ const links = computed(() => {
       }
     }
 
-    // Prev arrow (counter-clockwise direction) - 通用重新连接逻辑
-    let prevNodeId = node.prevId || (node.prev && node.prev.id)
+    // Prev arrow (counter-clockwise direction) - 修复：prevLink状态优先级高于prevId
+    let prevNodeId = null
 
-    // 通用逻辑：如果prev指向的节点被删除，找到上一个存在的节点
-    if (prevNodeId) {
-      const targetNode = nodes.value.find(n => n.id === prevNodeId)
-      if (targetNode && !targetNode.exists) {
-        // 找到上一个存在的节点
-        let searchId = prevNodeId
-        let found = false
-        for (let i = 0; i < 20 && !found; i++) {
-          searchId = (searchId - 2 + 20) % 20 + 1 // 1->20, 2->1, ..., 20->19
-          const searchNode = nodes.value.find(n => n.id === searchId)
-          if (searchNode && searchNode.exists) {
-            prevNodeId = searchId
-            found = true
-          }
-        }
-      }
+    // 只有当prevLink明确为true时，才获取prevId并显示箭头
+    if (node.prevLink === true) {
+      prevNodeId = node.prevId || (node.prev && node.prev.id)
     }
 
     if (prevNodeId) {
       const prevNode = nodes.value.find(n => n.id === prevNodeId)
       if (prevNode) {
-        let prevState = 'active'
+        let prevState = 'inactive'
 
-        // 根据节点和目标状态确定箭头状态
+        // 根据新的节点状态系统确定箭头状态
         if (!node.exists) {
           // 被删除的节点：箭头虚化
           prevState = 'removed'
         } else if (!prevNode.exists) {
           // 指向被删除节点的箭头：虚化
           prevState = 'fading'
-        } else {
-          // 正常连接状态：强制为active
+        } else if (node.prevLink === true && prevNode.exists) {
+          // 明确设置为true且目标节点存在：显示箭头
           prevState = 'active'
         }
 
@@ -456,8 +430,8 @@ onMounted(() => {
 }
 
 .info-text {
-  fill: #ebdbb2;
-  font-size: 20px;
+  fill: #fbf1c7;
+  font-size: 28px;
   font-weight: bold;
   text-anchor: middle;
   dominant-baseline: middle;
@@ -465,7 +439,7 @@ onMounted(() => {
 
 .round-text {
   fill: #928374;
-  font-size: 18px;
+  font-size: 22px;
   font-weight: bold;
   text-anchor: middle;
   dominant-baseline: middle;
