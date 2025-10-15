@@ -123,14 +123,24 @@ const pathData = computed(() => {
 
 /* State-based styles */
 .circle-link.state-fading {
-  opacity: 0.2;
-  stroke-width: 1;
+  opacity: 0.3;
+  stroke-width: 1.5;
+  stroke-dasharray: 3, 3;
 }
 
 .circle-link.state-removed {
-  opacity: 0.05;
-  stroke-width: 0.5;
-  stroke-dasharray: 2, 6;
+  opacity: 0.1;
+  stroke-width: 1;
+  stroke-dasharray: 2, 4;
+}
+
+/* Different styles for removed next/prev arrows */
+.circle-link.type-next.state-removed {
+  stroke: #45858850; /* Very faded blue */
+}
+
+.circle-link.type-prev.state-removed {
+  stroke: #98971a50; /* Very faded green */
 }
 
 /* Hover effects for better interactivity */

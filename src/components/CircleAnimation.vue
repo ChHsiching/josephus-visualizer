@@ -87,13 +87,22 @@ const activeLinks = computed(() => {
 
   // Highlight both arrows of the active node (next and prev)
   if (activeNode && activeNode.exists) {
-    // Highlight next arrow
-    if (activeNode.next && activeNode.next.exists) {
-      links.add(`${activeNode.id}-${activeNode.next.id}-next`)
+    // Highlight next arrow - 使用ID信息
+    const nextNodeId = activeNode.nextId || (activeNode.next && activeNode.next.id)
+    if (nextNodeId) {
+      const nextNode = nodes.value.find(n => n.id === nextNodeId)
+      if (nextNode && nextNode.exists) {
+        links.add(`${activeNode.id}-${nextNodeId}-next`)
+      }
     }
-    // Highlight prev arrow
-    if (activeNode.prev && activeNode.prev.exists) {
-      links.add(`${activeNode.id}-${activeNode.prev.id}-prev`)
+
+    // Highlight prev arrow - 使用ID信息
+    const prevNodeId = activeNode.prevId || (activeNode.prev && activeNode.prev.id)
+    if (prevNodeId) {
+      const prevNode = nodes.value.find(n => n.id === prevNodeId)
+      if (prevNode && prevNode.exists) {
+        links.add(`${activeNode.id}-${prevNodeId}-prev`)
+      }
     }
   }
 
@@ -112,45 +121,116 @@ const animationMessage = computed(() => {
 const links = computed(() => {
   const nodeLinks = []
 
+  
   // Create bidirectional arrows: each node has both 'next' and 'prev' arrows
   nodes.value.forEach(node => {
-    // Only create arrows from existing nodes
-    if (!node.exists) return
+    // 修复：允许所有节点创建箭头，但根据状态设置不同样式
+    // 这样删除节点后，相邻节点的连接箭头可以正确重新指向
 
-    // Next arrow (clockwise direction) - only if target exists
-    if (node.next && node.next.exists) {
-      const nextState = node.linkState?.toNext || 'active'
+    // Next arrow (clockwise direction) - 通用重新连接逻辑
+    let nextNodeId = node.nextId || (node.next && node.next.id)
 
-      const edgePoints = getArrowEdgePoints(node.id, node.next.id, 32, 'next')
-
-      nodeLinks.push({
-        from: node.id,
-        to: node.next.id,
-        type: 'next',
-        direction: 'clockwise',
-        state: nextState,
-        fromPos: edgePoints.start,
-        toPos: edgePoints.end,
-        curvature: edgePoints.curvature
-      })
+    // 通用逻辑：如果next指向的节点被删除，找到下一个存在的节点
+    if (nextNodeId) {
+      const targetNode = nodes.value.find(n => n.id === nextNodeId)
+      if (targetNode && !targetNode.exists) {
+        // 找到下一个存在的节点
+        let searchId = nextNodeId
+        let found = false
+        for (let i = 0; i < 20 && !found; i++) {
+          searchId = (searchId % 20) + 1 // 1->2, 2->3, ..., 20->1
+          const searchNode = nodes.value.find(n => n.id === searchId)
+          if (searchNode && searchNode.exists) {
+            nextNodeId = searchId
+            found = true
+          }
+        }
+      }
     }
 
-    // Prev arrow (counter-clockwise direction) - only if target exists
-    if (node.prev && node.prev.exists) {
-      const prevState = node.linkState?.toPrev || 'active'
+    if (nextNodeId) {
+      const nextNode = nodes.value.find(n => n.id === nextNodeId)
+      if (nextNode) {
+        let nextState = 'active'
 
-      const edgePoints = getArrowEdgePoints(node.id, node.prev.id, 32, 'prev')
+        // 根据节点和目标状态确定箭头状态
+        if (!node.exists) {
+          // 被删除的节点：箭头虚化
+          nextState = 'removed'
+        } else if (!nextNode.exists) {
+          // 指向被删除节点的箭头：虚化
+          nextState = 'fading'
+        } else {
+          // 正常连接状态：强制为active
+          nextState = 'active'
+        }
 
-      nodeLinks.push({
-        from: node.id,
-        to: node.prev.id,
-        type: 'prev',
-        direction: 'counter-clockwise',
-        state: prevState,
-        fromPos: edgePoints.start,
-        toPos: edgePoints.end,
-        curvature: edgePoints.curvature
-      })
+        const edgePoints = getArrowEdgePoints(node.id, nextNodeId, 32, 'next')
+
+        nodeLinks.push({
+          from: node.id,
+          to: nextNodeId,
+          type: 'next',
+          direction: 'clockwise',
+          state: nextState,
+          fromPos: edgePoints.start,
+          toPos: edgePoints.end,
+          curvature: edgePoints.curvature
+        })
+      }
+    }
+
+    // Prev arrow (counter-clockwise direction) - 通用重新连接逻辑
+    let prevNodeId = node.prevId || (node.prev && node.prev.id)
+
+    // 通用逻辑：如果prev指向的节点被删除，找到上一个存在的节点
+    if (prevNodeId) {
+      const targetNode = nodes.value.find(n => n.id === prevNodeId)
+      if (targetNode && !targetNode.exists) {
+        // 找到上一个存在的节点
+        let searchId = prevNodeId
+        let found = false
+        for (let i = 0; i < 20 && !found; i++) {
+          searchId = (searchId - 2 + 20) % 20 + 1 // 1->20, 2->1, ..., 20->19
+          const searchNode = nodes.value.find(n => n.id === searchId)
+          if (searchNode && searchNode.exists) {
+            prevNodeId = searchId
+            found = true
+          }
+        }
+      }
+    }
+
+    if (prevNodeId) {
+      const prevNode = nodes.value.find(n => n.id === prevNodeId)
+      if (prevNode) {
+        let prevState = 'active'
+
+        // 根据节点和目标状态确定箭头状态
+        if (!node.exists) {
+          // 被删除的节点：箭头虚化
+          prevState = 'removed'
+        } else if (!prevNode.exists) {
+          // 指向被删除节点的箭头：虚化
+          prevState = 'fading'
+        } else {
+          // 正常连接状态：强制为active
+          prevState = 'active'
+        }
+
+        const edgePoints = getArrowEdgePoints(node.id, prevNodeId, 32, 'prev')
+
+        nodeLinks.push({
+          from: node.id,
+          to: prevNodeId,
+          type: 'prev',
+          direction: 'counter-clockwise',
+          state: prevState,
+          fromPos: edgePoints.start,
+          toPos: edgePoints.end,
+          curvature: edgePoints.curvature
+        })
+      }
     }
   })
 
