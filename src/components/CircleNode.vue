@@ -49,7 +49,7 @@ const props = defineProps({
 
 const emit = defineEmits(['node-click'])
 
-const nodeRadius = 30
+const nodeRadius = 32
 
 const nodeClasses = computed(() => ({
   'active': props.active,
@@ -107,7 +107,7 @@ const handleClick = () => {
 
 .node-text {
   fill: #ebdbb2;
-  font-size: 14px;
+  font-size: 18px;
   font-weight: bold;
   text-anchor: middle;
   dominant-baseline: middle;

@@ -71,7 +71,12 @@ export class JosephusSimulator {
       id: i + 1,
       exists: true,
       x: 0,
-      y: 0
+      y: 0,
+      // 添加链接状态跟踪
+      linkState: {
+        toNext: 'active',    // 指向下一个节点的链接状态: 'active' | 'fading' | 'removed'
+        toPrev: 'active'     // 指向上一个节点的链接状态: 'active' | 'fading' | 'removed'
+      }
     }));
 
     // Set up circular links
@@ -89,12 +94,21 @@ export class JosephusSimulator {
     const bounds = [3, 5, 7, 13];
     let current = this.nodes[0];
 
+    // Create a working copy of nodes for animation
+    const animationNodes = this.nodes.map(n => ({
+      ...n,
+      linkState: { ...n.linkState },
+      // 保持next和prev的引用关系
+      next: n.next ? { ...n.next, linkState: { ...n.next.linkState } } : null,
+      prev: n.prev ? { ...n.prev, linkState: { ...n.prev.linkState } } : null
+    }));
+
     // Initial state
     steps.push({
       type: 'initialization',
       message: 'Creating circular ring with 20 nodes',
-      line: 26,
-      nodes: this.nodes.map(n => ({...n})),
+      line: 55,  // Corresponds to "first = RingConstruct(N);"
+      nodes: animationNodes.map(n => ({...n})),
       activeNode: null,
       nodesToRemove: []
     });
@@ -104,38 +118,88 @@ export class JosephusSimulator {
       const bound = bounds[(round - 1) % 4];
       const nodeIdToRemove = this.precomputedSequence[round - 1];
 
-      // Counting phase
+      // Counting phase - ensure all existing nodes have active links
+      animationNodes.forEach(n => {
+        if (n.exists) {
+          n.linkState = {
+            toNext: 'active',
+            toPrev: 'active'
+          };
+        } else {
+          // Ensure removed nodes maintain their removed state
+          n.linkState = {
+            toNext: 'removed',
+            toPrev: 'removed'
+          };
+        }
+      });
+
       steps.push({
         type: 'counting',
         message: `Round ${round}: Counting ${bound} steps from node ${current.id}`,
-        line: 59,
-        nodes: this.nodes.map(n => ({...n})),
-        activeNode: this.nodes[nodeIdToRemove - 1],
+        line: 57,  // Corresponds to "toRemove = count(first, boundMachine(i));"
+        nodes: animationNodes.map(n => ({
+          ...n,
+          linkState: { ...n.linkState },
+          next: n.next ? { ...n.next, linkState: { ...n.next.linkState } } : null,
+          prev: n.prev ? { ...n.prev, linkState: { ...n.prev.linkState } } : null
+        })),
+        activeNode: animationNodes[nodeIdToRemove - 1],
         nodesToRemove: []
       });
 
-      // Removal phase
+      // Removal phase - mark node as removed and update bidirectional pointers
+      const removedNode = animationNodes[nodeIdToRemove - 1];
+      removedNode.exists = false;
+      removedNode.linkState = {
+        toNext: 'removed',
+        toPrev: 'removed'
+      };
+
+      // 获取被删除节点的前驱和后继
+      const prevNode = removedNode.prev;
+      const nextNode = removedNode.next;
+
+      // 正确的双向指针更新逻辑
+      if (prevNode && nextNode && prevNode.exists && nextNode.exists) {
+        // 模拟C代码中的removeNode逻辑：更新双向指针
+        // 1. prevNode.next = nextNode (前驱节点的next指向后继节点)
+        prevNode.next = nextNode;
+        prevNode.linkState.toNext = 'active'; // 确保next箭头保持活跃
+
+        // 2. nextNode.prev = prevNode (后继节点的prev指向前驱节点)
+        nextNode.prev = prevNode;
+        nextNode.linkState.toPrev = 'active'; // 确保prev箭头保持活跃
+
+        // Successful bidirectional reconnection between existing nodes
+      }
+
       steps.push({
         type: 'removing',
-        message: `Removing node ${nodeIdToRemove}`,
-        line: 60,
-        nodes: this.nodes.map(n => ({...n, exists: n.id !== nodeIdToRemove})),
-        activeNode: this.nodes[nodeIdToRemove - 1],
-        nodesToRemove: [this.nodes[nodeIdToRemove - 1]]
+        message: `Removing node ${nodeIdToRemove} and updating bidirectional pointers`,
+        line: 58,  // Corresponds to "first = removeNode(toRemove);"
+        nodes: animationNodes.map(n => ({
+          ...n,
+          linkState: { ...n.linkState },
+          next: n.next ? { ...n.next, linkState: { ...n.next.linkState } } : null,
+          prev: n.prev ? { ...n.prev, linkState: { ...n.prev.linkState } } : null
+        })),
+        activeNode: removedNode,
+        nodesToRemove: [removedNode]
       });
 
       // Update current to next existing node
       do {
         current = current.next;
-      } while (!current.exists && current !== this.nodes[0]);
+      } while (!animationNodes[current.id - 1].exists && current !== this.nodes[0]);
     }
 
     // Complete state
     steps.push({
       type: 'complete',
       message: 'Algorithm complete! All nodes eliminated.',
-      line: 62,
-      nodes: this.nodes.map(n => ({...n, exists: false})),
+      line: 60,  // Corresponds to "return 0;"
+      nodes: animationNodes.map(n => ({...n, exists: false})),
       activeNode: null,
       nodesToRemove: []
     });
