@@ -639,77 +639,161 @@ export class JosephusSimulator {
       });
 
       // Step 125 + (round-1)*10: removeNode函数 - 第44行
+      // 获取前驱和后继节点，准备箭头重连
+      // 修复：使用this.nodes引用，确保指针关系正确
+      const removedNode = this.nodes[tempNode.id - 1];
+
+      // 修复：找到实际存在的前驱节点（向前遍历直到找到存在的节点）
+      let prevNode = removedNode.prev;
+      while (!prevNode.exists && prevNode !== removedNode) {
+        prevNode = prevNode.prev;
+      }
+
+      // 修复：找到实际存在的后继节点（向后遍历直到找到存在的节点）
+      let nextActualNode = removedNode.next;
+      while (!nextActualNode.exists && nextActualNode !== removedNode) {
+        nextActualNode = nextActualNode.next;
+      }
+
+      // 准备箭头状态：前驱节点的next箭头准备重新指向
+      const step125Nodes = animationNodes.map(n => {
+        if (n.id === prevNode.id && n.exists) {
+          // 前驱节点：暂时隐藏next箭头，准备重连
+          return {
+            ...n,
+            linkState: { ...n.linkState },
+            nextId: undefined, // 准备更新
+            nextLink: false, // 暂时隐藏，下一步显示重连
+            prevLink: n.prevLink
+          }
+        } else {
+          return {...n, linkState: { ...n.linkState }}
+        }
+      });
+
       steps.push({
         type: 'removing',
-        message: `第 ${round} 轮：removeNode() - 保存下一个节点指针`,
+        message: `第 ${round} 轮：removeNode() - 保存下一个节点指针，准备重连箭头`,
         line: 44,  // pNode first = currentNode->next;
-        nodes: animationNodes.map(n => ({...n, linkState: { ...n.linkState }})),
+        nodes: step125Nodes,
         activeNode: tempNode,
         nodesToRemove: []
       });
 
       // Step 126 + (round-1)*10: removeNode函数 - 第45行
+      // 前驱节点的next箭头重新指向后继节点
+      const step126Nodes = step125Nodes.map(n => {
+        if (n.id === prevNode.id && n.exists) {
+          // 前驱节点：next箭头指向后继节点
+          return {
+            ...n,
+            linkState: { ...n.linkState, toNext: 'active' },
+            nextId: nextActualNode.id, // 更新指向后继节点
+            nextLink: true, // 显示重连的next箭头
+            prevLink: n.prevLink
+          }
+        } else {
+          return {...n}
+        }
+      });
+
       steps.push({
         type: 'removing',
-        message: `第 ${round} 轮：更新前驱节点的 next 指针`,
+        message: `第 ${round} 轮：前驱节点 ${prevNode.id} 的 next 指针重新指向节点 ${nextActualNode.id}`,
         line: 45,  // currentNode->pre->next = currentNode->next;
-        nodes: animationNodes.map(n => ({...n, linkState: { ...n.linkState }})),
-        activeNode: tempNode,
+        nodes: step126Nodes,
+        activeNode: prevNode,
         nodesToRemove: []
       });
 
       // Step 127 + (round-1)*10: removeNode函数 - 第46行
+      // 后继节点的prev箭头重新指向前驱节点
+      const step127Nodes = step126Nodes.map(n => {
+        if (n.id === nextActualNode.id && n.exists) {
+          // 后继节点：prev箭头指向前驱节点
+          return {
+            ...n,
+            linkState: { ...n.linkState, toPrev: 'active' },
+            prevId: prevNode.id, // 更新指向前驱节点
+            nextLink: n.nextLink,
+            prevLink: true // 显示重连的prev箭头
+          }
+        } else {
+          return {...n}
+        }
+      });
+
       steps.push({
         type: 'removing',
-        message: `第 ${round} 轮：更新后继节点的 prev 指针`,
+        message: `第 ${round} 轮：后继节点 ${nextActualNode.id} 的 prev 指针重新指向节点 ${prevNode.id}`,
         line: 46,  // first->pre = currentNode->pre;
-        nodes: animationNodes.map(n => ({...n, linkState: { ...n.linkState }})),
-        activeNode: tempNode,
+        nodes: step127Nodes,
+        activeNode: nextActualNode,
         nodesToRemove: []
       });
 
       // Step 128 + (round-1)*10: removeNode函数 - 第47-48行删除节点
-      const removedNode = animationNodes[tempNode.id - 1];
-      removedNode.exists = false;
-      removedNode.linkState = { toNext: 'removed', toPrev: 'removed' };
+      // 基于step127Nodes的状态，删除被删除的节点，但保持重连的箭头
+      const step128Nodes = step127Nodes.map(n => {
+        if (n.id === tempNode.id) {
+          // 被删除的节点：标记为不存在，隐藏所有箭头
+          return {
+            ...n,
+            exists: false,
+            linkState: { toNext: 'removed', toPrev: 'removed' },
+            nextLink: false,
+            prevLink: false
+          }
+        } else {
+          // 其他节点：保持重连后的箭头状态
+          return {...n}
+        }
+      });
 
-      // 获取前驱和后继节点
-      const prevNode = removedNode.prev;
-      const nextActualNode = removedNode.next;
-
-      // 更新双向指针
-      if (prevNode && nextActualNode && prevNode.exists && nextActualNode.exists) {
-        prevNode.nextId = nextActualNode.id;
-        prevNode.linkState.toNext = 'active';
-        nextActualNode.prevId = prevNode.id;
-        nextActualNode.linkState.toPrev = 'active';
-        prevNode.next = nextActualNode;
-        nextActualNode.prev = prevNode;
-      }
+      // 修复：获取删除后的节点引用，用于nodesToRemove
+      const deletedNodeForRemoval = step128Nodes.find(n => n.id === tempNode.id);
 
       steps.push({
         type: 'removing',
-        message: `第 ${round} 轮：节点 ${tempNode.id} 被删除 (释放内存)`,
+        message: `第 ${round} 轮：节点 ${tempNode.id} 被删除，双向环链保持连接`,
         line: 48,  // free(currentNode);
-        nodes: animationNodes.map(n => ({...n, linkState: { ...n.linkState }})),
-        activeNode: removedNode,
-        nodesToRemove: [removedNode]
+        nodes: step128Nodes,
+        activeNode: tempNode,
+        nodesToRemove: [deletedNodeForRemoval]
       });
 
       // Step 129 + (round-1)*10: removeNode函数 - 第49行 return
+      // 保持重连后的箭头状态，确保动画一致性
       steps.push({
         type: 'removing',
-        message: `第 ${round} 轮：removeNode() 返回新的 first 指针`,
+        message: `第 ${round} 轮：removeNode() 返回新的 first 指针 (节点 ${nextActualNode.id})`,
         line: 49,  // return first;
-        nodes: animationNodes.map(n => ({...n, linkState: { ...n.linkState }})),
+        nodes: step128Nodes, // 保持重连后的状态
         activeNode: nextActualNode,
-        nodesToRemove: [removedNode]
+        nodesToRemove: [deletedNodeForRemoval]
       });
 
-      // 更新current到下一个存在的节点
-      do {
-        current = current.next;
-      } while (!animationNodes[current.id - 1].exists);
+      // 同步到animationNodes以保持状态一致性
+      step128Nodes.forEach((node, index) => {
+        animationNodes[index] = {...node};
+        // 修复：同时同步this.nodes的状态和指针关系
+        if (this.nodes[index]) {
+          this.nodes[index].exists = node.exists;
+          this.nodes[index].linkState = {...node.linkState};
+
+          // 同步箭头状态到this.nodes
+          if (this.nodes[index].next) {
+            this.nodes[index].next.linkState = {...this.nodes[index].next.linkState};
+          }
+          if (this.nodes[index].prev) {
+            this.nodes[index].prev.linkState = {...this.nodes[index].prev.linkState};
+          }
+        }
+      });
+
+      // 修复：更新current到被删除节点的下一个节点（使用this.nodes引用）
+      // 这确保删除顺序正确：3, 8, 15, 10, 13, 19, 7, 6, 12, 20, 14, 1, 5, 18, 2, 11, 4, 16, 17, 9
+      current = this.nodes[nextActualNode.id - 1];
     }
 
     // ===== main函数结束 =====
