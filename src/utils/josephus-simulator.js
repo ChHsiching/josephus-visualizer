@@ -87,7 +87,7 @@ export class JosephusSimulator {
   }
 
   /**
-   * Generate all animation steps for the complete demo
+   * Generate all animation steps for the complete demo with fine-grained function-level details
    */
   generateAnimationSteps() {
     const steps = [];
@@ -103,118 +103,237 @@ export class JosephusSimulator {
       prevId: (index - 1 + 20) % 20 + 1 // 1->20, 2->1, ..., 20->19
     }));
 
-    // Initial state
+    // ===== 初始化阶段：RingConstruct函数细化 =====
+
+    // Step 1: malloc创建第一个节点
     steps.push({
       type: 'initialization',
-      message: 'Creating circular ring with 20 nodes',
-      line: 55,  // Corresponds to "first = RingConstruct(N);"
-      nodes: animationNodes.map(n => ({...n})),
-      activeNode: null,
+      message: 'Creating first node with malloc()',
+      line: 13,  // head = (pNode)malloc(sizeof(Node));
+      nodes: animationNodes.map(n => ({...n, exists: n.id === 1})),
+      activeNode: animationNodes[0],
       nodesToRemove: []
     });
 
-    // Process each elimination round
+    // Step 2: 设置第一个节点ID
+    steps.push({
+      type: 'initialization',
+      message: 'Setting first node ID to 1',
+      line: 14,  // head->id = 1;
+      nodes: animationNodes.map(n => ({...n, exists: n.id === 1})),
+      activeNode: animationNodes[0],
+      nodesToRemove: []
+    });
+
+    // Step 3-22: for循环创建剩余节点 (i = 2 到 20)
+    for (let i = 2; i <= 20; i++) {
+      // malloc新节点
+      steps.push({
+        type: 'initialization',
+        message: `Creating node ${i} with malloc()`,
+        line: 17,  // q = (pNode)malloc(sizeof(Node));
+        nodes: animationNodes.map(n => ({...n, exists: n.id <= i})),
+        activeNode: animationNodes[i - 1],
+        nodesToRemove: []
+      });
+
+      // 设置节点ID
+      steps.push({
+        type: 'initialization',
+        message: `Setting node ${i} ID`,
+        line: 18,  // q->id = i;
+        nodes: animationNodes.map(n => ({...n, exists: n.id <= i})),
+        activeNode: animationNodes[i - 1],
+        nodesToRemove: []
+      });
+
+      // 建立next指针
+      steps.push({
+        type: 'initialization',
+        message: `Linking node ${i-1} to node ${i} via next pointer`,
+        line: 19,  // p->next = q;
+        nodes: animationNodes.map(n => ({...n, exists: n.id <= i})),
+        activeNode: animationNodes[i - 1],
+        nodesToRemove: []
+      });
+
+      // 建立prev指针
+      steps.push({
+        type: 'initialization',
+        message: `Linking node ${i} to node ${i-1} via prev pointer`,
+        line: 20,  // q->pre = p;
+        nodes: animationNodes.map(n => ({...n, exists: n.id <= i})),
+        activeNode: animationNodes[i - 1],
+        nodesToRemove: []
+      });
+
+      // 移动p指针
+      steps.push({
+        type: 'initialization',
+        message: `Moving p pointer to node ${i}`,
+        line: 21,  // p = p->next;
+        nodes: animationNodes.map(n => ({...n, exists: n.id <= i})),
+        activeNode: animationNodes[i - 1],
+        nodesToRemove: []
+      });
+    }
+
+    // Step 23: 构建环形 - 最后一个节点指向头节点
+    steps.push({
+      type: 'initialization',
+      message: 'Creating circular link: node 20 -> node 1',
+      line: 23,  // p->next = head;
+      nodes: animationNodes.map(n => ({...n, exists: true})),
+      activeNode: animationNodes[19],
+      nodesToRemove: []
+    });
+
+    // Step 24: 构建环形 - 头节点指向前一个节点
+    steps.push({
+      type: 'initialization',
+      message: 'Creating circular link: node 1 -> node 20',
+      line: 24,  // head->pre = p;
+      nodes: animationNodes.map(n => ({...n, exists: true})),
+      activeNode: animationNodes[0],
+      nodesToRemove: []
+    });
+
+    // ===== 主要算法循环：每轮8个详细步骤 =====
+
     for (let round = 1; round <= 20; round++) {
       const bound = bounds[(round - 1) % 4];
       const nodeIdToRemove = this.precomputedSequence[round - 1];
 
-      // Counting phase - ensure all existing nodes have active links
+      // 确保所有存在的节点都有活跃的链接
       animationNodes.forEach(n => {
         if (n.exists) {
-          n.linkState = {
-            toNext: 'active',
-            toPrev: 'active'
-          };
-        } else {
-          // Ensure removed nodes maintain their removed state
-          n.linkState = {
-            toNext: 'removed',
-            toPrev: 'removed'
-          };
+          n.linkState = { toNext: 'active', toPrev: 'active' };
         }
       });
 
+      // Step 1: 调用boundMachine函数 - 数组访问
       steps.push({
         type: 'counting',
-        message: `Round ${round}: Counting ${bound} steps from node ${current.id}`,
-        line: 57,  // Corresponds to "toRemove = count(first, boundMachine(i));"
-        nodes: animationNodes.map(n => ({
-          ...n,
-          linkState: { ...n.linkState },
-          // 保持引用关系
-          next: n.next,
-          prev: n.prev,
-          // 包含ID信息
-          nextId: n.nextId,
-          prevId: n.prevId
-        })),
-        activeNode: animationNodes[nodeIdToRemove - 1],
+        message: `Round ${round}: Getting bound from boundMachine(${round})`,
+        line: 30,  // return boundList[(order - 1) % 4];
+        nodes: animationNodes.map(n => ({...n, linkState: { ...n.linkState }})),
+        activeNode: current,
         nodesToRemove: []
       });
 
-      // Removal phase - mark node as removed and update bidirectional pointers
-      const removedNode = animationNodes[nodeIdToRemove - 1];
-      removedNode.exists = false;
-      removedNode.linkState = {
-        toNext: 'removed',
-        toPrev: 'removed'
-      };
+      // Step 2: count函数 - 初始化q指针
+      steps.push({
+        type: 'counting',
+        message: `Counting: Initializing q pointer to current node ${current.id}`,
+        line: 35,  // q = first;
+        nodes: animationNodes.map(n => ({...n, linkState: { ...n.linkState }})),
+        activeNode: current,
+        nodesToRemove: []
+      });
 
-      // 获取被删除节点的前驱和后继
-      const prevNode = removedNode.prev;
-      const nextNode = removedNode.next;
+      // Step 3: count函数 - for循环计数开始
+      steps.push({
+        type: 'counting',
+        message: `Counting: Starting loop to count ${bound} steps`,
+        line: 36,  // for (int i = 2; i <= bound; i++)
+        nodes: animationNodes.map(n => ({...n, linkState: { ...n.linkState }})),
+        activeNode: current,
+        nodesToRemove: []
+      });
 
-      // 正确的双向指针更新逻辑 - 使用ID更新
-      if (prevNode && nextNode && prevNode.exists && nextNode.exists) {
-        // 模拟C代码中的removeNode逻辑：更新双向指针ID
-        // 1. prevNode.nextId = nextNode.id (前驱节点的next指向后继节点)
-        prevNode.nextId = nextNode.id;
-        prevNode.linkState.toNext = 'active'; // 确保next箭头保持活跃
+      // Step 4: count函数 - 逐步移动q指针 (bound-1步)
+      let tempNode = current;
+      for (let step = 2; step <= bound; step++) {
+        tempNode = tempNode.next;
+        while (!tempNode.exists) {
+          tempNode = tempNode.next;
+        }
 
-        // 2. nextNode.prevId = prevNode.id (后继节点的prev指向前驱节点)
-        nextNode.prevId = prevNode.id;
-        nextNode.linkState.toPrev = 'active'; // 确保prev箭头保持活跃
-
-        // 也更新引用关系以保持兼容性
-        prevNode.next = nextNode;
-        nextNode.prev = prevNode;
-
-        // Successful bidirectional reconnection between existing nodes
+        steps.push({
+          type: 'counting',
+          message: `Counting: Step ${step-1} to node ${tempNode.id}`,
+          line: 37,  // q = q->next;
+          nodes: animationNodes.map(n => ({...n, linkState: { ...n.linkState }})),
+          activeNode: tempNode,
+          nodesToRemove: []
+        });
       }
 
-      // 创建步骤快照，保留指针更新后的状态
-      // 使用深拷贝确保每个步骤独立
-      const stepSnapshot = animationNodes.map(n => ({
-        ...n,
-        linkState: { ...n.linkState },
-        // 保留更新后的引用关系
-        next: n.next,
-        prev: n.prev,
-        // 包含更新后的ID信息
-        nextId: n.nextId,
-        prevId: n.prevId
-      }));
+      // Step 5: removeNode函数 - 保存next指针
+      const targetNode = tempNode;
+      const nextNode = targetNode.next;
+      while (!nextNode.exists) {
+        nextNode.next;
+      }
+
+      steps.push({
+        type: 'counting',
+        message: `Found target node ${targetNode.id}, preparing to remove`,
+        line: 43,  // pNode first = currentNode->next;
+        nodes: animationNodes.map(n => ({...n, linkState: { ...n.linkState }})),
+        activeNode: targetNode,
+        nodesToRemove: []
+      });
+
+      // Step 6: removeNode函数 - 更新前驱节点的next指针
+      steps.push({
+        type: 'removing',
+        message: `Removing node ${targetNode.id}: Updating prev node's next pointer`,
+        line: 44,  // currentNode->pre->next = currentNode->next;
+        nodes: animationNodes.map(n => ({...n, linkState: { ...n.linkState }})),
+        activeNode: targetNode,
+        nodesToRemove: []
+      });
+
+      // Step 7: removeNode函数 - 更新后继节点的prev指针
+      steps.push({
+        type: 'removing',
+        message: `Removing node ${targetNode.id}: Updating next node's prev pointer`,
+        line: 45,  // first->pre = currentNode->pre;
+        nodes: animationNodes.map(n => ({...n, linkState: { ...n.linkState }})),
+        activeNode: targetNode,
+        nodesToRemove: []
+      });
+
+      // Step 8: 实际删除节点并更新指针
+      const removedNode = animationNodes[targetNode.id - 1];
+      removedNode.exists = false;
+      removedNode.linkState = { toNext: 'removed', toPrev: 'removed' };
+
+      // 获取前驱和后继节点
+      const prevNode = removedNode.prev;
+      const nextActualNode = removedNode.next;
+
+      // 更新双向指针
+      if (prevNode && nextActualNode && prevNode.exists && nextActualNode.exists) {
+        prevNode.nextId = nextActualNode.id;
+        prevNode.linkState.toNext = 'active';
+        nextActualNode.prevId = prevNode.id;
+        nextActualNode.linkState.toPrev = 'active';
+        prevNode.next = nextActualNode;
+        nextActualNode.prev = prevNode;
+      }
 
       steps.push({
         type: 'removing',
-        message: `Removing node ${nodeIdToRemove} and updating bidirectional pointers`,
-        line: 58,  // Corresponds to "first = removeNode(toRemove);"
-        nodes: stepSnapshot,
+        message: `Node ${targetNode.id} removed, updating circular links`,
+        line: 46,  // printf("%d ", currentNode->id);
+        nodes: animationNodes.map(n => ({...n, linkState: { ...n.linkState }})),
         activeNode: removedNode,
         nodesToRemove: [removedNode]
       });
 
-      // Update current to next existing node
+      // 更新current到下一个存在的节点
       do {
         current = current.next;
-      } while (!animationNodes[current.id - 1].exists && current !== this.nodes[0]);
+      } while (!animationNodes[current.id - 1].exists);
     }
 
     // Complete state
     steps.push({
       type: 'complete',
       message: 'Algorithm complete! All nodes eliminated.',
-      line: 60,  // Corresponds to "return 0;"
+      line: 60,  // return 0;
       nodes: animationNodes.map(n => ({...n, exists: false})),
       activeNode: null,
       nodesToRemove: []

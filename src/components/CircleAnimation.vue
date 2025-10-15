@@ -457,7 +457,7 @@ onMounted(() => {
 
 .info-text {
   fill: #ebdbb2;
-  font-size: 16px;
+  font-size: 20px;
   font-weight: bold;
   text-anchor: middle;
   dominant-baseline: middle;
@@ -465,7 +465,8 @@ onMounted(() => {
 
 .round-text {
   fill: #928374;
-  font-size: 14px;
+  font-size: 18px;
+  font-weight: bold;
   text-anchor: middle;
   dominant-baseline: middle;
 }
@@ -494,11 +495,11 @@ onMounted(() => {
   }
 
   .info-text {
-    font-size: 14px;
+    font-size: 16px;
   }
 
   .round-text {
-    font-size: 12px;
+    font-size: 14px;
   }
 }
 </style>
