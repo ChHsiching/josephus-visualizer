@@ -16,11 +16,11 @@ An interactive Josephus problem visualization tool built with Vue 3 + Vite, feat
 ## 📸 演示截图
 
 ### 图 1：页面整体效果
-![页面整体效果](https://via.placeholder.com/800x450.png?text=图1：左侧代码编辑器+右侧环形动画+底部控制面板)
+![页面整体效果](https://via.placeholder.com/800x450.png?text=Screenshot+1:+Code+Editor+%2B+Animation+%2B+Control+Panel)
 *左侧显示 C 语言代码，右侧展示约瑟夫环动画，底部是播放控制面板*
 
 ### 图 2：动画执行中
-![动画执行中](https://via.placeholder.com/800x450.png?text=图2：高亮当前代码行+动画节点删除过程)
+![动画执行中](https://via.placeholder.com/800x450.png?text=Screenshot+2:+Highlighted+Code+Line+%2B+Node+Elimination)
 *代码行高亮指示当前执行位置，右侧圆环显示节点被删除的动态过程*
 
 > **提示**：将来可替换为真实截图，展示项目的实际运行效果

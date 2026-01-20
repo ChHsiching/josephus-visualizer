@@ -25,8 +25,8 @@
       <div class="info-section">
         <h3>📖 使用步骤</h3>
         <ol>
-          <li>打开 GitHub Pages 链接（https://chhsiching.github.io/josephus-visualizer/）</li>
-          <li>点击下方 "▶️ 播放" 按钮开始演示</li>
+          <li>页面已打开，直接点击下方 "开始体验" 按钮</li>
+          <li>点击底部 "▶️ 播放" 按钮开始演示</li>
           <li>观察左侧代码执行与右侧动画同步过程</li>
         </ol>
       </div>
