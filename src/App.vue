@@ -1,5 +1,8 @@
 <template>
   <div id="app">
+    <!-- Project Info Card Backdrop -->
+    <div class="project-info-card-backdrop" v-if="showInfoCard" @click="closeInfoCard"></div>
+    
     <!-- Project Info Card -->
     <div class="project-info-card" v-if="showInfoCard">
       <button class="close-btn" @click="closeInfoCard" title="关闭">×</button>
@@ -81,7 +84,7 @@ const currentStep = ref(0)
 const isPlaying = ref(false)
 const animationSpeed = ref(1)
 const playInterval = ref(null)
-const showInfoCard = ref(true)
+const showInfoCard = ref(!localStorage.getItem('infoCardDismissed'))
 
 // Performance optimization: debounce state
 const isExecuting = ref(false)
@@ -90,6 +93,7 @@ const lineClickDebounce = ref(null)
 // Info card control
 const closeInfoCard = () => {
   showInfoCard.value = false
+  localStorage.setItem('infoCardDismissed', 'true')
 }
 
 // Computed properties
@@ -346,6 +350,17 @@ onMounted(() => {
 <style>
 @import './styles/gruvbox-dark.scss';
 
+/* Project Info Card Backdrop */
+.project-info-card-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.75);
+  z-index: 1999;
+}
+
 /* Project Info Card Styles */
 .project-info-card {
   position: fixed;
@@ -363,17 +378,6 @@ onMounted(() => {
   overflow-y: auto;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
   color: #ebdbb2;
-}
-
-.project-info-card::before {
-  content: '';
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.75);
-  z-index: -1;
 }
 
 .close-btn {
