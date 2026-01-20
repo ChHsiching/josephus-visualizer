@@ -1,5 +1,42 @@
 <template>
   <div id="app">
+    <!-- Project Info Card Backdrop -->
+    <div class="project-info-card-backdrop" v-if="showInfoCard" @click="closeInfoCard"></div>
+    
+    <!-- Project Info Card -->
+    <div class="project-info-card" v-if="showInfoCard">
+      <button class="close-btn" @click="closeInfoCard" title="关闭">×</button>
+      <h1 class="project-title">约瑟夫问题可视化工具</h1>
+      <p class="project-tagline">
+        用 "左侧代码 + 右侧 debug 式动画" 直观演示约瑟夫环算法，帮新手理解抽象逻辑
+      </p>
+      
+      <div class="info-section">
+        <h3>🎯 核心功能</h3>
+        <ul>
+          <li>① 实时跟随代码行数的动画演示</li>
+          <li>② 可观察节点删除过程</li>
+          <li>③ 无需安装，打开网页即能用</li>
+        </ul>
+      </div>
+
+      <div class="info-section">
+        <h3>🛠️ 技术栈</h3>
+        <p>Vue 3 + Vite + JavaScript + SVG + SCSS (Gruvbox Dark 主题)</p>
+      </div>
+
+      <div class="info-section">
+        <h3>📖 使用步骤</h3>
+        <ol>
+          <li>页面已打开，直接点击下方 "开始体验" 按钮</li>
+          <li>点击底部 "▶️ 播放" 按钮开始演示</li>
+          <li>观察左侧代码执行与右侧动画同步过程</li>
+        </ol>
+      </div>
+
+      <button class="start-btn" @click="closeInfoCard">开始体验</button>
+    </div>
+
     <div class="main-container">
       <!-- Left Panel: Code Display -->
       <CodeDisplay
@@ -47,10 +84,17 @@ const currentStep = ref(0)
 const isPlaying = ref(false)
 const animationSpeed = ref(1)
 const playInterval = ref(null)
+const showInfoCard = ref(!localStorage.getItem('infoCardDismissed'))
 
 // Performance optimization: debounce state
 const isExecuting = ref(false)
 const lineClickDebounce = ref(null)
+
+// Info card control
+const closeInfoCard = () => {
+  showInfoCard.value = false
+  localStorage.setItem('infoCardDismissed', 'true')
+}
 
 // Computed properties
 const animationState = computed(() => {
@@ -305,6 +349,126 @@ onMounted(() => {
 
 <style>
 @import './styles/gruvbox-dark.scss';
+
+/* Project Info Card Backdrop */
+.project-info-card-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.75);
+  z-index: 1999;
+}
+
+/* Project Info Card Styles */
+.project-info-card {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2000;
+  background: #282828;
+  border: 2px solid #fabd2f;
+  border-radius: 12px;
+  padding: 32px;
+  max-width: 600px;
+  width: 90%;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  color: #ebdbb2;
+}
+
+.close-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: transparent;
+  border: none;
+  color: #ebdbb2;
+  font-size: 32px;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  line-height: 28px;
+  transition: color 0.2s;
+}
+
+.close-btn:hover {
+  color: #fb4934;
+}
+
+.project-title {
+  font-size: 28px;
+  font-weight: bold;
+  color: #fabd2f;
+  margin: 0 0 16px 0;
+  text-align: center;
+}
+
+.project-tagline {
+  font-size: 16px;
+  color: #d5c4a1;
+  line-height: 1.6;
+  margin-bottom: 24px;
+  text-align: center;
+  padding: 0 12px;
+}
+
+.info-section {
+  margin-bottom: 24px;
+}
+
+.info-section h3 {
+  font-size: 18px;
+  color: #83a598;
+  margin: 0 0 12px 0;
+  font-weight: 600;
+}
+
+.info-section ul,
+.info-section ol {
+  margin: 0;
+  padding-left: 24px;
+  color: #ebdbb2;
+}
+
+.info-section li {
+  margin-bottom: 8px;
+  line-height: 1.5;
+}
+
+.info-section p {
+  margin: 0;
+  color: #d5c4a1;
+  line-height: 1.6;
+}
+
+.start-btn {
+  display: block;
+  width: 100%;
+  padding: 14px 24px;
+  background: #b8bb26;
+  color: #282828;
+  border: none;
+  border-radius: 6px;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+  margin-top: 12px;
+}
+
+.start-btn:hover {
+  background: #98971a;
+  transform: translateY(-2px);
+}
+
+.start-btn:active {
+  transform: translateY(0);
+}
 
 /* App-specific overrides */
 .main-container {
