@@ -227,8 +227,6 @@ Issues and Pull Requests are welcome to improve the project!
 
 An interactive Josephus problem visualization tool built with Vue 3 + Vite, featuring line-by-line code debugging and animated demonstrations.
 
-基于 Vue 3 + Vite 构建的交互式约瑟夫问题可视化工具，支持逐行代码调试和动画演示。
-
 ### 💡 Project Value
 
 **Solving the pain point of beginners learning the Josephus problem: "understanding code but not logic"**
