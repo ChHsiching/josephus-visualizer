@@ -1,10 +1,10 @@
 # 约瑟夫问题可视化工具 / Josephus Problem Visualizer
 
-[English](#english) | [中文](#中文)
+[English](#english) | [中文](#chinese)
 
 ---
 
-## 中文
+## <a id="chinese"></a>中文
 
 基于 Vue 3 + Vite 构建的交互式约瑟夫问题可视化工具，支持逐行代码调试和动画演示。
 
@@ -214,7 +214,8 @@ Issues and Pull Requests are welcome to improve the project!
 :gitmoji: [type](scope): message
 ```
 
-示例 / Examples:
+**示例 / Examples:**
+
 ```
 ✨ feat(visualization): add new animation feature
 🐛 fix(arrows): resolve arrow connection issues
@@ -223,7 +224,7 @@ Issues and Pull Requests are welcome to improve the project!
 
 ---
 
-## English
+## <a id="english"></a>English
 
 An interactive Josephus problem visualization tool built with Vue 3 + Vite, featuring line-by-line code debugging and animated demonstrations.
 
@@ -405,7 +406,8 @@ Issues and Pull Requests are welcome to improve the project!
 :gitmoji: [type](scope): message
 ```
 
-Examples:
+**Examples:**
+
 ```
 ✨ feat(visualization): add new animation feature
 🐛 fix(arrows): resolve arrow connection issues
