@@ -85,7 +85,7 @@ npm run preview
 
 约瑟夫问题描述：n 个人站成一圈，从指定的人开始顺时针报数，数到 k 的人被淘汰，下一个人重新从 1 开始报数。如此循环，直到所有人被淘汰，确定淘汰顺序。
 
-The Josephus problem describes: n people stand in a circle, starting from a specified person and counting clockwise. The person who counts to k is eliminated, and the next person restarts counting from 1. This continues until all are eliminated.
+The Josephus problem describes: n people stand in a circle, starting from a specified person and counting clockwise. The person who counts to k is eliminated, and the next person restarts counting from 1. This continues until all are eliminated, determining the elimination order.
 
 #### 实现细节 / Implementation Details
 
@@ -192,7 +192,7 @@ This project is licensed under the [MIT License](LICENSE).
 #### Q5: 想学习项目源码，从哪里开始？ / Where to start learning the source code?
 **A:** 建议按以下顺序阅读 / Recommended reading order:
 1. `src/utils/josephus-simulator.js` - 算法模拟器核心逻辑 / Algorithm simulator core logic
-2. `src/App.vue` - 主应用组件，理解整体结构 / Main application component
+2. `src/App.vue` - 主应用组件，理解整体结构 / Main application component to understand overall structure
 3. `src/components/CircleAnimation.vue` - 动画渲染逻辑 / Animation rendering logic
 4. `src/components/CodeDisplay.vue` - 代码高亮显示 / Code highlighting display
 
@@ -386,7 +386,7 @@ This project is licensed under the [MIT License](LICENSE).
 #### Q5: Where to start learning the source code?
 **A:** Recommended reading order:
 1. `src/utils/josephus-simulator.js` - Algorithm simulator core logic
-2. `src/App.vue` - Main application component, understand overall structure
+2. `src/App.vue` - Main application component to understand overall structure
 3. `src/components/CircleAnimation.vue` - Animation rendering logic
 4. `src/components/CodeDisplay.vue` - Code highlighting display
 
