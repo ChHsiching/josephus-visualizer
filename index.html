@@ -4,8 +4,249 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="约瑟夫问题可视化工具 - 用代码+动画直观理解约瑟夫环算法" />
-    <title>约瑟夫问题可视化工具 | Josephus Problem Visualizer</title>
+    
+    <!-- Primary Meta Tags -->
+    <title>约瑟夫问题可视化工具 | Josephus Problem Visualizer - 在线交互式算法学习平台</title>
+    <meta name="title" content="约瑟夫问题可视化工具 | Josephus Problem Visualizer - 在线交互式算法学习平台" />
+    <meta name="description" content="约瑟夫问题可视化网站：基于Vue 3的交互式约瑟夫环算法可视化工具，支持逐行代码调试和动画演示。通过左侧代码+右侧动画的方式，帮助新手直观理解约瑟夫问题的抽象逻辑。免费在线使用，无需安装。Josephus Problem Visualizer - Interactive algorithm learning tool with step-by-step debugging and animation." />
+    <meta name="keywords" content="约瑟夫问题,约瑟夫环,约瑟夫问题可视化,约瑟夫问题可视化网站,Josephus Problem,算法可视化,数据结构,循环链表,双向链表,算法学习,编程教学,在线工具,algorithm visualization,circular linked list,interactive learning,Vue 3" />
+    <meta name="author" content="ChHsiching" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://chhsiching.github.io/josephus-visualizer/" />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://chhsiching.github.io/josephus-visualizer/" />
+    <meta property="og:title" content="约瑟夫问题可视化工具 | Josephus Problem Visualizer" />
+    <meta property="og:description" content="交互式约瑟夫环算法可视化工具，通过代码+动画直观演示，帮助理解约瑟夫问题。Interactive Josephus Problem visualization tool with code and animation." />
+    <meta property="og:image" content="https://chhsiching.github.io/josephus-visualizer/og-image.png" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta property="og:locale:alternate" content="en_US" />
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://chhsiching.github.io/josephus-visualizer/" />
+    <meta property="twitter:title" content="约瑟夫问题可视化工具 | Josephus Problem Visualizer" />
+    <meta property="twitter:description" content="交互式约瑟夫环算法可视化工具，通过代码+动画直观演示，帮助理解约瑟夫问题。" />
+    <meta property="twitter:image" content="https://chhsiching.github.io/josephus-visualizer/og-image.png" />
+    
+    <!-- Language Alternatives -->
+    <link rel="alternate" hreflang="zh-CN" href="https://chhsiching.github.io/josephus-visualizer/" />
+    <link rel="alternate" hreflang="en" href="https://chhsiching.github.io/josephus-visualizer/" />
+    <link rel="alternate" hreflang="x-default" href="https://chhsiching.github.io/josephus-visualizer/" />
+    
+    <!-- Schema.org JSON-LD Structured Data for SEO and AI/RAG -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebApplication",
+          "@id": "https://chhsiching.github.io/josephus-visualizer/#webapp",
+          "name": "约瑟夫问题可视化工具",
+          "alternateName": [
+            "Josephus Problem Visualizer",
+            "约瑟夫环可视化",
+            "约瑟夫问题可视化网站"
+          ],
+          "url": "https://chhsiching.github.io/josephus-visualizer/",
+          "description": "基于Vue 3 + Vite构建的交互式约瑟夫问题可视化工具，支持逐行代码调试和动画演示。通过'左侧代码 + 右侧debug式动画'的方式，让学习者直观理解约瑟夫环算法的执行过程，解决新手'只懂代码不懂逻辑'的痛点。",
+          "applicationCategory": "EducationalApplication",
+          "operatingSystem": "Web Browser",
+          "browserRequirements": "Requires JavaScript. Requires HTML5.",
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+          },
+          "featureList": [
+            "交互式可视化：基于SVG的双向循环链表可视化",
+            "逐行调试：GDB风格的C代码执行演示，实时高亮",
+            "完整播放控制：支持播放、暂停、步进和速度调节",
+            "实时动画：展示链表构建、计数、节点删除的完整过程",
+            "响应式设计：Gruvbox暗色主题，支持不同屏幕尺寸",
+            "详细状态显示：显示当前回合、已删除节点、执行步骤"
+          ],
+          "screenshot": "https://chhsiching.github.io/josephus-visualizer/screenshot.png",
+          "softwareVersion": "1.0.0",
+          "inLanguage": ["zh-CN", "en"],
+          "author": {
+            "@type": "Person",
+            "name": "ChHsiching",
+            "url": "https://github.com/chhsiching"
+          },
+          "creator": {
+            "@type": "Person",
+            "name": "ChHsiching",
+            "url": "https://github.com/chhsiching"
+          },
+          "publisher": {
+            "@type": "Organization",
+            "name": "ChHsiching",
+            "url": "https://github.com/chhsiching"
+          },
+          "datePublished": "2024-01-01",
+          "dateModified": "2026-01-21",
+          "license": "https://opensource.org/licenses/MIT"
+        },
+        {
+          "@type": "SoftwareApplication",
+          "@id": "https://chhsiching.github.io/josephus-visualizer/#software",
+          "name": "Josephus Problem Visualizer",
+          "applicationCategory": "DeveloperApplication",
+          "applicationSubCategory": "Algorithm Visualization Tool",
+          "operatingSystem": "Cross-platform (Web)",
+          "description": "An interactive Josephus problem visualization tool built with Vue 3 + Vite, featuring line-by-line code debugging and animated demonstrations. Helps beginners understand the Josephus problem by connecting code execution with visual animation.",
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+          },
+          "softwareRequirements": "Modern web browser with JavaScript support",
+          "permissions": "No special permissions required",
+          "installUrl": "https://chhsiching.github.io/josephus-visualizer/",
+          "downloadUrl": "https://github.com/chhsiching/josephus-visualizer"
+        },
+        {
+          "@type": "LearningResource",
+          "@id": "https://chhsiching.github.io/josephus-visualizer/#learning",
+          "name": "约瑟夫问题交互式学习工具",
+          "description": "通过可视化动画和逐行代码调试学习约瑟夫问题（Josephus Problem）算法。本工具使用双向循环链表实现，包含完整的构建、计数和删除过程演示。",
+          "learningResourceType": "Interactive Simulation",
+          "educationalLevel": "Beginner to Intermediate",
+          "audience": {
+            "@type": "EducationalAudience",
+            "educationalRole": "student"
+          },
+          "teaches": [
+            "约瑟夫问题算法 (Josephus Problem Algorithm)",
+            "双向循环链表 (Doubly Circular Linked List)",
+            "数据结构可视化 (Data Structure Visualization)",
+            "算法调试技巧 (Algorithm Debugging Techniques)"
+          ],
+          "timeRequired": "PT15M",
+          "inLanguage": ["zh-CN", "en"],
+          "isAccessibleForFree": true,
+          "interactivityType": "active"
+        },
+        {
+          "@type": "HowTo",
+          "@id": "https://chhsiching.github.io/josephus-visualizer/#howto",
+          "name": "如何使用约瑟夫问题可视化工具",
+          "description": "学习使用约瑟夫问题可视化工具的详细步骤指南",
+          "step": [
+            {
+              "@type": "HowToStep",
+              "position": 1,
+              "name": "打开工具",
+              "text": "访问在线演示网站 https://chhsiching.github.io/josephus-visualizer/",
+              "url": "https://chhsiching.github.io/josephus-visualizer/"
+            },
+            {
+              "@type": "HowToStep",
+              "position": 2,
+              "name": "开始演示",
+              "text": "点击底部控制栏的播放按钮开始自动执行算法演示"
+            },
+            {
+              "@type": "HowToStep",
+              "position": 3,
+              "name": "观察执行",
+              "text": "观察左侧代码高亮显示当前执行行，右侧动画展示节点状态和指针关系"
+            },
+            {
+              "@type": "HowToStep",
+              "position": 4,
+              "name": "控制播放",
+              "text": "使用步进按钮逐步查看，或调整播放速度（1x、2x、4x）"
+            },
+            {
+              "@type": "HowToStep",
+              "position": 5,
+              "name": "代码导航",
+              "text": "点击左侧代码面板的行号可以跳转到对应的执行步骤"
+            }
+          ],
+          "totalTime": "PT5M"
+        },
+        {
+          "@type": "TechArticle",
+          "@id": "https://chhsiching.github.io/josephus-visualizer/#article",
+          "headline": "约瑟夫问题算法详解与可视化实现",
+          "description": "约瑟夫问题（Josephus Problem）是一个经典的数学和计算机科学问题。n个人站成一圈，从指定的人开始顺时针报数，数到k的人被淘汰，下一个人重新从1开始报数。如此循环，直到所有人被淘汰。本文通过可视化工具详细讲解使用双向循环链表实现约瑟夫问题的完整过程。",
+          "keywords": [
+            "约瑟夫问题",
+            "Josephus Problem",
+            "循环链表",
+            "算法可视化",
+            "数据结构",
+            "算法学习"
+          ],
+          "articleSection": "Algorithm Visualization",
+          "articleBody": "约瑟夫问题是一个经典算法问题。本工具使用双向循环链表实现，包含以下核心功能：1) RingConstruct函数创建N个节点的双向循环链表；2) count函数从节点开始计数找到要淘汰的节点；3) removeNode函数移除当前节点并重新连接链表。可视化系统采用双环箭头系统，外环显示next指针（顺时针），内环显示prev指针（逆时针）。",
+          "author": {
+            "@type": "Person",
+            "name": "ChHsiching",
+            "url": "https://github.com/chhsiching"
+          },
+          "datePublished": "2024-01-01",
+          "dateModified": "2026-01-21",
+          "inLanguage": "zh-CN"
+        },
+        {
+          "@type": "SoftwareSourceCode",
+          "@id": "https://chhsiching.github.io/josephus-visualizer/#sourcecode",
+          "name": "Josephus Problem Visualizer Source Code",
+          "description": "Open source code for interactive Josephus problem visualization tool",
+          "programmingLanguage": [
+            "JavaScript",
+            "Vue",
+            "C"
+          ],
+          "runtimePlatform": "Web Browser",
+          "codeRepository": "https://github.com/chhsiching/josephus-visualizer",
+          "codeSampleType": "full application",
+          "license": "https://opensource.org/licenses/MIT",
+          "author": {
+            "@type": "Person",
+            "name": "ChHsiching",
+            "url": "https://github.com/chhsiching"
+          }
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://chhsiching.github.io/josephus-visualizer/#website",
+          "url": "https://chhsiching.github.io/josephus-visualizer/",
+          "name": "约瑟夫问题可视化工具",
+          "description": "交互式约瑟夫问题可视化学习平台",
+          "inLanguage": ["zh-CN", "en"],
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": "https://chhsiching.github.io/josephus-visualizer/?q={search_term_string}",
+            "query-input": "required name=search_term_string"
+          }
+        },
+        {
+          "@type": "BreadcrumbList",
+          "@id": "https://chhsiching.github.io/josephus-visualizer/#breadcrumb",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": "https://chhsiching.github.io/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "约瑟夫问题可视化工具",
+              "item": "https://chhsiching.github.io/josephus-visualizer/"
+            }
+          ]
+        }
+      ]
+    }
+    </script>
   </head>
   <body>
     <div id="app"></div>
